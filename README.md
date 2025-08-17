@@ -17,7 +17,7 @@
 ### Quick start(大象装进冰箱只需3步)：
 >  必须使用golang 1.21以上版本
 ```
-git clone https://github.com/o8oo8o/WebSSH.git
+git clone https://github.com/jinhuaitao/WebSSH.git
 ```
 ```
 cd WebSSH/gossh
