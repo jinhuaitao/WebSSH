@@ -19,10 +19,21 @@
 ---
 ### Quick start(大象装进冰箱只需3步)：
 >  必须使用golang 1.21以上版本
-* git clone https://github.com/o8oo8o/WebSSH.git
-* cd WebSSH/gossh
-* go build
-* ./gossh
+```
+git clone https://github.com/o8oo8o/WebSSH.git
+```
+```
+cd WebSSH/gossh
+```
+```
+go mod tidy
+```
+```
+go build
+```
+```
+nohup ./gossh > gossh.log 2>&1 &
+```
 >  打开链接 http://127.0.0.1:8899/ 开始享用吧,第一次需要初始化
 <br/>
 
