@@ -55,7 +55,7 @@ var DefaultConfig = AppConfig{
 	JwtExpire:     time.Minute * 120,
 	StatusRefresh: time.Second * 3,
 	ClientCheck:   time.Second * 15,
-	Address:       "",
+	Address:       "::",
 	Port:          "8899",
 	CertFile:      path.Join(WorkDir, "cert.pem"),
 	KeyFile:       path.Join(WorkDir, "key.key"),
