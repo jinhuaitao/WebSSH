@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSSH终端</title>
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <link rel="stylesheet" href="/static/css/xterm.css">
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-terminal"></i> WebSSH</h1>
+                {{if .Username}}
+                <div class="user-info">
+                    <span class="username"><i class="fas fa-user-circle"></i> {{.Username}}</span>
+                    <a href="/logout" class="logout-btn" title="退出登录"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+                {{end}}
+            </div>
+            <div class="sidebar-content">
+                <div class="connection-form" id="login-form">
+                    <h2>新建连接</h2>
+                    <div class="form-group">
+                        <label for="host"><i class="fas fa-server"></i> 主机地址</label>
+                        <input type="text" id="host" placeholder="例如: 192.168.1.100">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="port"><i class="fas fa-plug"></i> 端口</label>
+                            <input type="text" id="port" value="22">
+                        </div>
+                        <div class="form-group half">
+                            <label for="username"><i class="fas fa-user"></i> 用户名</label>
+                            <input type="text" id="username" placeholder="例如: root">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="auth-type"><i class="fas fa-key"></i> 认证方式</label>
+                        <select id="auth-type">
+                            <option value="password">密码认证</option>
+                            <option value="key">SSH密钥认证</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="password-group">
+                        <label for="password"><i class="fas fa-lock"></i> 密码</label>
+                        <div class="password-input-container">
+                            <input type="password" id="password">
+                            <button type="button" id="toggle-password" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" id="key-group" style="display:none;">
+                        <label for="key"><i class="fas fa-file-alt"></i> SSH私钥</label>
+                        <textarea id="key" placeholder="粘贴您的SSH私钥"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button id="connect-btn" class="primary-btn">
+                            <i class="fas fa-plug"></i> 连接
+                        </button>
+                    </div>
+                    
+                    <div class="saved-connections">
+                        <h3><i class="fas fa-history"></i> 最近连接</h3>
+                        <div class="connection-list" id="recent-connections">
+                            <!-- 最近连接将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <p>© 2025 WebSSH | <a href="https://github.com/jinhuaitao/Web-SSH" target="_blank">GitHub</a></p>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 欢迎页 -->
+            <div class="welcome-container" id="welcome-container">
+                <div class="welcome-content">
+                    <i class="fas fa-terminal welcome-icon"></i>
+                    <h1>欢迎使用 WebSSH</h1>
+                    <p>安全、高效、美观的Web终端连接工具</p>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>安全连接</h3>
+                            <p>支持密码和SSH密钥认证</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-bolt"></i>
+                            <h3>实时响应</h3>
+                            <p>流畅的终端体验</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-history"></i>
+                            <h3>连接历史</h3>
+                            <p>保存最近的连接记录</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <h3>响应式设计</h3>
+                            <p>适配各种屏幕尺寸</p>
+                        </div>
+                    </div>
+                    <p class="welcome-instruction">请在左侧填写连接信息以开始使用</p>
+                </div>
+            </div>
+            
+            <!-- 终端容器 -->
+            <div class="terminal-container" id="terminal-container" style="display:none;">
+                <div class="terminal-header">
+                    <div class="connection-info">
+                        <i class="fas fa-server"></i>
+                        <span id="connection-info"></span>
+                    </div>
+                    <div class="terminal-controls">
+                        <button id="disconnect-btn" class="control-btn danger" title="断开连接">
+                            <i class="fas fa-power-off"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="terminal" class="terminal"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/xterm.js"></script>
+    <script src="/static/js/xterm-addon-fit.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

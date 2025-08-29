@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  webssh:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - webssh_data:/app/data
+    networks:
+      default:
+        ipv6_address: "2001:db8::2"  # 使用标准文档示例IPv6地址
+    restart: unless-stopped
+
+volumes:
+  webssh_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: "172.20.0.0/16"
+        - subnet: "2001:db8::/64"  # 标准文档示例IPv6子网
