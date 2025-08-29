@@ -20,8 +20,8 @@ RUN go mod tidy && \
 # 编译应用（启用CGO以支持SQLite）
 RUN CGO_ENABLED=1 GOOS=linux go build -o webssh .
 
-# 使用包含必要库的debian镜像
-FROM debian:bullseye-slim
+# 使用Ubuntu 22.04作为运行时基础镜像，它有更新的GLIBC版本
+FROM ubuntu:22.04
 
 WORKDIR /app
 
@@ -37,6 +37,9 @@ COPY --from=builder /app/webssh .
 # 复制静态文件和模板
 COPY --from=builder /app/static/ ./static/
 COPY --from=builder /app/templates/ ./templates/
+COPY --from=builder /app/controllers/ ./controllers/
+COPY --from=builder /app/middleware/ ./middleware/
+COPY --from=builder /app/models/ ./models/
 
 # 创建数据目录并设置权限
 RUN mkdir -p /app/data && \
