@@ -23,7 +23,7 @@
 2. 克隆此仓库
 3. 在项目根目录运行：
 ```bash
-git clone https://github.com/jinhuaitao/Web-SSH.git
+git clone https://github.com/jinhuaitao/WebSSH.git
 ```
 ```bash
 cd Web-SSH
@@ -39,7 +39,7 @@ docker-compose up -d
 
 如果您已经安装了Go 1.16+，可以直接运行：
 ```bash
-git clone https://github.com/jinhuaitao/Web-SSH.git
+git clone https://github.com/jinhuaitao/WebSSH.git
 ```
 ```bash
 cd Web-SSH
