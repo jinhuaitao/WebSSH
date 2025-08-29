@@ -26,7 +26,7 @@
 git clone https://github.com/jinhuaitao/WebSSH.git
 ```
 ```bash
-cd Web-SSH
+cd WebSSH
 ```
 ```bash
 docker-compose up -d
@@ -42,7 +42,7 @@ docker-compose up -d
 git clone https://github.com/jinhuaitao/WebSSH.git
 ```
 ```bash
-cd Web-SSH
+cd WebSSH
 ```
 ```bash
 go mod tidy
@@ -122,5 +122,8 @@ nohup go run main.go > output.log 2>&1 &
 ## 许可证
 
 MIT
+<img width="1647" height="1120" alt="image" src="https://github.com/user-attachments/assets/66e3f068-20b3-4f4f-851a-a62605d01c1a" />
+
+<img width="1646" height="1117" alt="image" src="https://github.com/user-attachments/assets/067f745a-f095-4767-a5cc-cb632e184200" />
 <img width="1652" height="1119" alt="38f6abb0-c3fb-478c-8ba1-dd3c707b543c" src="https://github.com/user-attachments/assets/ac0b2507-bbc1-42ee-97b1-644adfdea2a7" />
 <img width="1644" height="1114" alt="dca45297-c3ed-402f-8164-5b6dcde27285" src="https://github.com/user-attachments/assets/70b49141-f747-4a36-b892-c901bf019a05" />
