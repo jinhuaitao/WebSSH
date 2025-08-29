@@ -23,7 +23,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let socket;
     
     // 最近连接历史
-    let recentConnections = JSON.parse(localStorage.getItem('recentConnections')) || [];
+    let recentConnections = [];
+
+    // 从服务器获取SSH连接记录
+    function fetchSSHConnections() {
+        fetch('/api/ssh-connections')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('获取连接记录失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                recentConnections = data;
+                initRecentConnections();
+            })
+            .catch(error => {
+                console.error('获取SSH连接记录失败:', error);
+                // 如果API失败，尝试使用本地存储的备份
+                recentConnections = JSON.parse(localStorage.getItem('recentConnections')) || [];
+                initRecentConnections();
+            });
+    }
 
     // 初始化最近连接列表
     function initRecentConnections() {
@@ -34,15 +55,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        recentConnections.forEach((conn, index) => {
+        recentConnections.forEach((conn) => {
             const item = document.createElement('div');
             item.className = 'connection-item';
             item.innerHTML = `
                 <div class="connection-item-host">${conn.username}@${conn.host}</div>
                 <div class="connection-item-details">端口: ${conn.port} | 认证: ${conn.authType === 'password' ? '密码' : 'SSH密钥'}</div>
+                <button class="delete-connection" data-id="${conn.id}" title="删除此连接"><i class="fas fa-times"></i></button>
             `;
             
-            item.addEventListener('click', () => {
+            // 点击连接项填充表单
+            item.addEventListener('click', (e) => {
+                // 如果点击的是删除按钮，不填充表单
+                if (e.target.closest('.delete-connection')) {
+                    return;
+                }
+                
                 document.getElementById('host').value = conn.host;
                 document.getElementById('port').value = conn.port;
                 document.getElementById('username').value = conn.username;
@@ -51,16 +79,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 触发认证方式变更事件
                 const event = new Event('change');
                 authTypeSelect.dispatchEvent(event);
-                
-                if (conn.authType === 'password' && conn.password) {
-                    passwordInput.value = conn.password;
-                } else if (conn.authType === 'key' && conn.key) {
-                    document.getElementById('key').value = conn.key;
-                }
             });
+            
+            // 删除按钮事件
+            const deleteBtn = item.querySelector('.delete-connection');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation(); // 阻止事件冒泡
+                    const id = deleteBtn.getAttribute('data-id');
+                    if (id && id !== 'undefined') {
+                        deleteSSHConnection(id);
+                    } else {
+                        console.error('无效的连接ID');
+                        alert('无法删除连接：无效的连接ID');
+                    }
+                });
+            }
             
             recentConnectionsList.appendChild(item);
         });
+    }
+    
+    // 删除SSH连接记录
+    function deleteSSHConnection(id) {
+        console.log('正在删除连接ID:', id);
+        fetch(`/api/ssh-connections/delete?id=${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`删除失败: ${response.status} ${response.statusText} - ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('删除成功:', data);
+                // 删除成功，重新获取连接记录
+                fetchSSHConnections();
+            })
+            .catch(error => {
+                console.error('删除SSH连接记录失败:', error);
+                alert(`删除连接记录失败: ${error.message}`);
+            });
     }
 
     // 切换密码可见性
@@ -171,10 +232,13 @@ document.addEventListener('DOMContentLoaded', () => {
         terminal.dispose();
     });
 
-    // 保存连接到最近连接列表
+    // 保存连接到服务器
     function saveConnection(conn) {
+        // 保存到本地存储作为备份
+        let localConnections = JSON.parse(localStorage.getItem('recentConnections')) || [];
+        
         // 检查是否已存在相同连接
-        const existingIndex = recentConnections.findIndex(c => 
+        const existingIndex = localConnections.findIndex(c => 
             c.host === conn.host && 
             c.port === conn.port && 
             c.username === conn.username
@@ -182,22 +246,46 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 如果存在，先移除
         if (existingIndex !== -1) {
-            recentConnections.splice(existingIndex, 1);
+            localConnections.splice(existingIndex, 1);
         }
         
         // 添加到列表开头
-        recentConnections.unshift(conn);
+        localConnections.unshift(conn);
         
-        // 限制最多保存5个连接
-        if (recentConnections.length > 5) {
-            recentConnections.pop();
+        // 限制最多保存10个连接
+        if (localConnections.length > 10) {
+            localConnections.pop();
         }
         
         // 保存到本地存储
-        localStorage.setItem('recentConnections', JSON.stringify(recentConnections));
+        localStorage.setItem('recentConnections', JSON.stringify(localConnections));
         
-        // 更新UI
-        initRecentConnections();
+        // 保存到服务器
+        fetch('/api/ssh-connections/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                host: conn.host,
+                port: conn.port,
+                username: conn.username,
+                authType: conn.authType
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('保存连接记录失败');
+            }
+            // 保存成功后重新获取连接列表
+            fetchSSHConnections();
+        })
+        .catch(error => {
+            console.error('保存SSH连接记录失败:', error);
+            // 如果API失败，至少更新本地UI
+            recentConnections = localConnections;
+            initRecentConnections();
+        });
     }
 
     // 初始化终端
@@ -292,6 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // 初始化最近连接列表
-    initRecentConnections();
+    // 获取并初始化最近连接列表
+    fetchSSHConnections();
 });

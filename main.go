@@ -64,6 +64,11 @@ func main() {
 	http.HandleFunc("/register", controllers.RegisterHandler)
 	http.HandleFunc("/logout", controllers.LogoutHandler)
 
+	// SSH连接记录API
+	http.HandleFunc("/api/ssh-connections", controllers.GetSSHConnectionsHandler)
+	http.HandleFunc("/api/ssh-connections/save", controllers.SaveSSHConnectionHandler)
+	http.HandleFunc("/api/ssh-connections/delete", controllers.DeleteSSHConnectionHandler)
+
 	// 受保护的路由
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ssh", sshHandler)
@@ -117,6 +122,27 @@ func sshHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sendErrorMessage(conn, "无效的连接信息")
 		return
+	}
+
+	// 获取当前用户并保存连接记录
+	username := middleware.GetCurrentUser(r)
+	if username != "" {
+		user, err := models.GetUserByUsername(username)
+		if err == nil {
+			// 确定认证类型
+			authType := "password"
+			if config.Key != "" {
+				authType = "key"
+			}
+			
+			// 异步保存连接记录，不阻塞主流程
+			go func() {
+				err := models.SaveSSHConnection(user.ID, config.Host, config.Port, config.Username, authType)
+				if err != nil {
+					log.Printf("保存SSH连接记录失败: %v", err)
+				}
+			}()
+		}
 	}
 
 	// 创建SSH客户端配置

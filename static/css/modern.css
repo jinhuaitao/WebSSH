@@ -335,6 +335,7 @@ a:hover {
     cursor: pointer;
     transition: all 0.2s;
     border-left: 3px solid transparent;
+    position: relative;
 }
 
 .connection-item:hover {
@@ -377,6 +378,36 @@ a:hover {
     margin-right: 4px;
     font-size: 10px;
     opacity: 0.7;
+}
+
+/* 删除连接按钮 */
+.delete-connection {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 10px;
+    opacity: 0;
+}
+
+.connection-item:hover .delete-connection {
+    opacity: 1;
+}
+
+.delete-connection:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: rotate(90deg);
 }
 
 /* 主内容区 */
@@ -877,4 +908,15 @@ a:hover {
 .add-tab:hover {
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.8);
+}
+
+/* 无连接记录提示 */
+.no-connections {
+    padding: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--border-radius);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
 }

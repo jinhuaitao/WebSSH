@@ -46,6 +46,12 @@ func InitDB() error {
 		return err
 	}
 
+	// 初始化SSH连接记录表
+	err = initSSHConnectionTable()
+	if err != nil {
+		return err
+	}
+
 	log.Println("数据库初始化成功")
 	return nil
 }
