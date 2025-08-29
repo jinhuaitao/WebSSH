@@ -31,7 +31,10 @@ cd WebSSH
 ```bash
 docker-compose up -d
 ```
-
+或者
+```bash
+docker run -d -p 8080:8080 --restart=always --name webssh jhtone/webssh
+```
 4. 打开浏览器访问：http://localhost:8080
 
 
