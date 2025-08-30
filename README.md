@@ -31,7 +31,7 @@ cd WebSSH
 ```bash
 docker-compose up -d
 ```
-或者
+或
 ```bash
 docker run -d -p 8080:8080 --restart=always --name webssh jhtone/webssh
 ```
