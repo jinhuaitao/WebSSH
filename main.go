@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net" // 添加了 net 包
 	"net/http"
 	"net/url"
 	"os"
@@ -179,7 +180,10 @@ func getSSHClient(serverID string) (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         5 * time.Second,
 	}
-	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", srv.IP, srv.Port), config)
+
+	// 核心修改：使用 net.JoinHostPort 兼容 IPv6 格式
+	targetAddr := net.JoinHostPort(srv.IP, strconv.Itoa(srv.Port))
+	return ssh.Dial("tcp", targetAddr, config)
 }
 
 // --- 主程序 ---
