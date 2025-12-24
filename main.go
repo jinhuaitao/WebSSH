@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"io"
 	"log"
-	"net" // 添加了 net 包
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -181,7 +181,7 @@ func getSSHClient(serverID string) (*ssh.Client, error) {
 		Timeout:         5 * time.Second,
 	}
 
-	// 核心修改：使用 net.JoinHostPort 兼容 IPv6 格式
+	// 兼容 IPv6: 使用 net.JoinHostPort
 	targetAddr := net.JoinHostPort(srv.IP, strconv.Itoa(srv.Port))
 	return ssh.Dial("tcp", targetAddr, config)
 }
@@ -545,6 +545,31 @@ func handleSaveData(w http.ResponseWriter, r *http.Request) {
 		}
 	case "server":
 		if req.Action == "add" {
+			// --- 自动添加默认分组逻辑开始 ---
+			if req.Server.GroupID == "" {
+				var defaultGroupID string
+				// 1. 查找是否存在名为 "默认分组" 的组
+				for _, g := range db.Groups {
+					if g.Name == "默认分组" {
+						defaultGroupID = g.ID
+						break
+					}
+				}
+				// 2. 如果不存在，则创建
+				if defaultGroupID == "" {
+					// 生成一个简易的时间戳ID
+					defaultGroupID = fmt.Sprintf("%d", time.Now().UnixNano())
+					newGroup := Group{
+						ID:   defaultGroupID,
+						Name: "默认分组",
+					}
+					db.Groups = append(db.Groups, newGroup)
+				}
+				// 3. 将服务器归入该组
+				req.Server.GroupID = defaultGroupID
+			}
+			// --- 自动添加默认分组逻辑结束 ---
+
 			db.Servers = append(db.Servers, req.Server)
 		}
 		if req.Action == "delete" {
