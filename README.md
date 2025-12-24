@@ -29,7 +29,7 @@ WebSSH Manager 是一个基于 Go 语言开发的单文件 WebSSH 解决方案�
 方法一：Docker 一键启动（推荐）
 无需任何环境配置，一条命令即可启动：
 
-Bash
+
 ```
 touch data.json && chmod 666 data.json && docker run -d --name webssh --restart=always --network host -v $(pwd)/data.json:/app/data.json jhtone/webssh
 ```
