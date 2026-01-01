@@ -991,77 +991,45 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
 ::-webkit-scrollbar{width:8px;height:8px} ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px} ::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
 
-/* 侧边栏基础样式 */
 .sidebar{height:100vh;background:var(--bg-card);border-right:1px solid var(--border);min-width:240px;display:flex;flex-direction:column;transition:all 0.3s;z-index: 1000;}
 .logo{padding:1.5rem;font-size:1.25rem;font-weight:700;color:var(--text-main);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .nav-link{color:var(--text-muted);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:12px;font-weight:500;transition:all 0.2s; white-space: nowrap;}
 .nav-link:hover{background:var(--hover-bg);color:var(--text-main)}
 .nav-link.active{background:rgba(59,130,246,0.15);color:var(--accent);border-right:3px solid var(--accent)}
 .nav-link i { font-size: 1.1rem; }
-.logout-btn{margin-top:auto;border-top:1px solid var(--border);color:var(--danger)}
+
+.sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); display: flex; align-items: center; width: 100%; }
+.logout-btn{ flex: 1; margin-top: 0 !important; border-top: none !important; color: var(--danger) !important; }
 .logout-btn:hover{background:rgba(239,68,68,0.1);color:#f87171}
+.github-btn { color: var(--text-muted); padding: 0.75rem 1.25rem; font-size: 1.2rem; display: flex; align-items: center; transition: all 0.2s; border-left: 1px solid var(--border); }
+.github-btn:hover { color: var(--accent); background: var(--hover-bg); }
 
 .content{flex:1;padding:2rem;overflow-y:auto;height: 100vh; height: 100dvh; padding-bottom: calc(2rem + var(--nav-height));}
 
-/* --- 移动端适配 (核心修改) --- */
 @media (max-width: 768px) {
     :root { --nav-height: 65px; }
     body { flex-direction: column; }
-    .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: var(--nav-height);
-        min-width: auto;
-        border-right: none;
-        border-top: 1px solid var(--border);
-        flex-direction: row;
-        justify-content: space-around;
-        padding: 0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-    }
+    .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); min-width: auto; border-right: none; border-top: 1px solid var(--border); flex-direction: row; justify-content: space-around; padding: 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); }
     .logo { display: none; }
-    .nav-link {
-        flex-direction: column;
-        gap: 4px;
-        padding: 8px 0;
-        font-size: 0.75rem;
-        flex: 1;
-        justify-content: center;
-        border-right: none !important;
-        border-top: 3px solid transparent;
-    }
-    .nav-link.active {
-        border-right: none;
-        border-top: 3px solid var(--accent);
-        background: transparent;
-    }
+    .nav-link { flex-direction: column; gap: 4px; padding: 8px 0; font-size: 0.75rem; flex: 1; justify-content: center; border-right: none !important; border-top: 3px solid transparent; }
+    .nav-link.active { border-right: none; border-top: 3px solid var(--accent); background: transparent; }
     .nav-link i { font-size: 1.4rem; margin-bottom: 2px; }
-    .logout-btn { 
-        margin-top: 0; 
-        border-top: none; 
-        border-left: 1px solid var(--border);
-        max-width: 60px;
-    }
-    .content { padding: 1rem; padding-bottom: 120px; } /* 增加到底部 120px，防止内容被遮挡 */
+    .sidebar-footer { margin-top: 0; border-top: none; width: auto; display: contents; }
+    .logout-btn { margin-top: 0; border-top: none; border-left: 1px solid var(--border); max-width: 60px; }
+    .github-btn { flex: 1; padding: 8px 0; justify-content: center; border-left: 1px solid var(--border); border-top: 3px solid transparent; }
+    .content { padding: 1rem; padding-bottom: 120px; }
     h3 { font-size: 1.25rem; }
-    
-    /* 调整卡片和列表在手机上的显示 */
     .section-header { margin-bottom: 1rem; }
     .card-item { padding: 1rem; }
     .server-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     .server-info { width: 100%; }
     .server-actions { width: 100%; justify-content: flex-end; opacity: 1; margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
-    
-    /* 模态框全屏化，提升体验 */
     .modal-dialog { margin: 0.5rem; }
     #termModal .modal-dialog { max-width: 100vw; margin: 0; height: 100vh; }
     #termModal .modal-content { height: 100%; border-radius: 0; }
     .term-container { height: calc(100vh - 110px); }
 }
 
-/* 通用样式 */
 h3{font-size:1.5rem;font-weight:600;margin:0;color:var(--text-main)}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
 .btn-primary{background:var(--accent);border:none;padding:0.5rem 1rem;font-weight:500;color:#fff}
@@ -1109,11 +1077,14 @@ h3{font-size:1.5rem;font-weight:600;margin:0;color:var(--text-main)}
 const dashBody = `<div class="sidebar">
 <div class="logo"><i class="bi bi-terminal-fill"></i>WebSSH</div>
 <a href="#" onclick="showSection('servers',this)" class="nav-link active"><i class="bi bi-hdd-stack"></i> <span>服务器</span></a>
-<a href="#" onclick="showSection('groups',this)" class="nav-link"><i class="bi bi-folder2"></i> <span>分组</span></a>
-<a href="#" onclick="showSection('credentials',this)" class="nav-link"><i class="bi bi-key"></i> <span>凭证</span></a>
-<a href="#" onclick="showSection('snippets',this)" class="nav-link"><i class="bi bi-code-slash"></i> <span>指令</span></a>
-<a href="#" onclick="showSection('settings',this)" class="nav-link"><i class="bi bi-gear"></i> <span>设置</span></a>
-<a href="/api/logout" class="nav-link logout-btn"><i class="bi bi-box-arrow-left"></i> <span>退出</span></a>
+<a href="#" onclick="showSection('groups',this)" class="nav-link"><i class="bi bi-folder2"></i> <span>分组管理</span></a>
+<a href="#" onclick="showSection('credentials',this)" class="nav-link"><i class="bi bi-key"></i> <span>凭证管理</span></a>
+<a href="#" onclick="showSection('snippets',this)" class="nav-link"><i class="bi bi-code-slash"></i> <span>脚本管理</span></a>
+<a href="#" onclick="showSection('settings',this)" class="nav-link"><i class="bi bi-gear"></i> <span>系统设置</span></a>
+<div class="sidebar-footer">
+    <a href="/api/logout" class="nav-link logout-btn"><i class="bi bi-box-arrow-left"></i> <span>退出</span></a>
+    <a href="https://github.com/jinhuaitao/WebSSH" target="_blank" class="github-btn" title="View on GitHub"><i class="bi bi-github"></i></a>
+</div>
 </div><div class="content"><div id="section-servers">
 <div class="section-header"><h3>服务器列表</h3><button class="btn btn-primary" onclick="openModal('modalServer')"><i class="bi bi-plus-lg"></i> 新增服务器</button></div>
 {{range $g := .Groups}}
@@ -1176,14 +1147,11 @@ const dashModals = `<div class="modal fade" id="modalConfirm" tabindex="-1"><div
 <div class="modal fade" id="modalEditor" data-bs-backdrop="static" data-bs-keyboard="false"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">编辑: <span id="editor-filename" class="text-info font-monospace"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="editor"></div></div><div class="modal-footer border-top border-secondary"><span id="editor-status" class="me-auto text-muted small"></span><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">关闭</button><button type="button" class="btn btn-primary btn-sm" onclick="saveFileContent()">保存 (Ctrl+S)</button></div></div></div></div>`
 
 const dashScript = `<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script>
-// --- Register PWA Service Worker ---
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').then(reg => {
         console.log('SW registered:', reg);
     }).catch(err => console.log('SW registration failed:', err));
 }
-// -----------------------------------
-
 const uuid=()=>Math.random().toString(36).substr(2,9);let bsModals={},currentServerId="",editingId=null;const dbData={servers:{{.Servers|json}},groups:{{.Groups|json}},credentials:{{.Credentials|json}},snippets:{{.Snippets|json}}};
 let pendingAction=null;const bsConfirm=new bootstrap.Modal(document.getElementById('modalConfirm'));
 function showConfirm(msg,action){document.getElementById('confirmMessage').innerText=msg;pendingAction=action;bsConfirm.show();}
@@ -1207,7 +1175,8 @@ async function updateSettings(type){let payload={type:"settings",action:"update"
 async function restoreData(){let fileInput=document.getElementById('restore-file');if(fileInput.files.length===0)return alert('请选择备份文件');showConfirm("确定恢复数据？这将覆盖当前所有配置！",async()=>{let fd=new FormData();fd.append("backup_file",fileInput.files[0]);let res=await fetch('/api/restore',{method:'POST',body:fd});if(res.ok){alert('恢复成功，请重新登录');location.reload();}else{alert('恢复失败');}});}
 let term,socket,currentPath=".";const termModal=new bootstrap.Modal(document.getElementById('termModal'));
 function toggleQuickCmd(show){const btn=document.getElementById('btn-quick-cmd');if(show)btn.classList.remove('d-none');else btn.classList.add('d-none');}
-function openTerminal(id,name){currentServerId=id;document.getElementById('termTitle').innerText=name;toggleQuickCmd(true);document.querySelector('#termTabs a[href="#tab-ssh"]').click();termModal.show();const menu=document.getElementById('quick-snippets-menu');menu.innerHTML='';if(dbData.snippets&&dbData.snippets.length===0){menu.innerHTML='<li><span class="dropdown-item text-muted">暂无快捷指令</span></li>';}else if(dbData.snippets){dbData.snippets.forEach(s=>{let li=document.createElement('li');let a=document.createElement('a');a.className='dropdown-item cursor-pointer';a.innerHTML='<strong>'+s.name+'</strong><br><small class="text-muted" style="font-size:0.7em">'+s.command.substring(0,25)+'...</small>';a.onclick=function(){sendCommand(s.command);};li.appendChild(a);menu.appendChild(li);});}setTimeout(()=>{const c=document.getElementById('terminal');c.innerHTML='';const isLight=document.body.getAttribute('data-theme')==='light';const themeObj=isLight?{background:'#ffffff',foreground:'#000000',cursor:'#000000',selection:'rgba(0,0,0,0.3)'}:{background:'#000000',foreground:'#ffffff'};term=new Terminal({cursorBlink:true,fontSize:14,fontFamily:'Menlo, Monaco, "Courier New", monospace',theme:themeObj});const f=new FitAddon.FitAddon();term.loadAddon(f);term.open(c);f.fit();socket=new WebSocket('ws://'+location.host+'/ws/ssh?id='+id+'&cols='+term.cols+'&rows='+term.rows);socket.onmessage=(ev)=>{if(typeof ev.data==='string')term.write(ev.data);else{let r=new FileReader();r.onload=()=>term.write(r.result);r.readAsText(ev.data);}};term.onData(d=>socket.send(d));socket.onclose=()=>term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');window.onresize=()=>f.fit();},500);}
+function openTerminal(id,name){currentServerId=id;document.getElementById('termTitle').innerText=name;toggleQuickCmd(true);document.querySelector('#termTabs a[href="#tab-ssh"]').click();termModal.show();const menu=document.getElementById('quick-snippets-menu');menu.innerHTML='';if(dbData.snippets&&dbData.snippets.length===0){menu.innerHTML='<li><span class="dropdown-item text-muted">暂无快捷指令</span></li>';}else if(dbData.snippets){dbData.snippets.forEach(s=>{let li=document.createElement('li');let a=document.createElement('a');a.className='dropdown-item cursor-pointer';a.innerHTML='<strong>'+s.name+'</strong><br><small class="text-muted" style="font-size:0.7em">'+s.command.substring(0,25)+'...</small>';a.onclick=function(){sendCommand(s.command);};li.appendChild(a);menu.appendChild(li);});}setTimeout(()=>{const c=document.getElementById('terminal');c.innerHTML='';const isLight=document.body.getAttribute('data-theme')==='light';const themeObj=isLight?{background:'#ffffff',foreground:'#000000',cursor:'#000000',selection:'rgba(0,0,0,0.3)'}:{background:'#000000',foreground:'#ffffff'};term=new Terminal({cursorBlink:true,fontSize:14,fontFamily:'Menlo, Monaco, "Courier New", monospace',theme:themeObj});const f=new FitAddon.FitAddon();term.loadAddon(f);term.open(c);f.fit();let proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+socket=new WebSocket(proto+location.host+'/ws/ssh?id='+id+'&cols='+term.cols+'&rows='+term.rows);socket.onmessage=(ev)=>{if(typeof ev.data==='string')term.write(ev.data);else{let r=new FileReader();r.onload=()=>term.write(r.result);r.readAsText(ev.data);}};term.onData(d=>socket.send(d));socket.onclose=()=>term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');window.onresize=()=>f.fit();},500);}
 function closeTerm(){if(socket)socket.close();if(term)term.dispose();termModal.hide();}
 function sendCommand(cmd){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(cmd+"\n");term.focus();}}
 async function loadSFTP(path){if(!path)path=currentPath;if(path==='..'){let p=currentPath.split('/');p.pop();path=p.join('/')||'/';}document.getElementById('sftp-status').innerText="加载中...";try{let res=await fetch('/api/sftp/list?id='+currentServerId+'&path='+encodeURIComponent(path));let data=await res.json();currentPath=data.path;document.getElementById('sftp-path').value=currentPath;let tbody=document.getElementById('sftp-list');tbody.innerHTML='';data.files.forEach(f=>{let tr=document.createElement('tr');let icon=f.is_dir?'<i class="bi bi-folder-fill text-warning"></i>':'<i class="bi bi-file-earmark-text text-secondary"></i>';let clickFn=f.is_dir?"loadSFTP('"+currentPath+"/"+f.name+"')":"";let nameLink='<span class="cursor-pointer text-primary" onclick="'+clickFn+'">'+f.name+'</span>';let actions='';if(!f.is_dir){actions+='<button class="btn btn-sm py-0 me-2 text-info" title="下载" onclick="window.open(\'/api/sftp/download?id='+currentServerId+'&path='+encodeURIComponent(currentPath+'/'+f.name)+'\')"><i class="bi bi-download"></i></button>';actions+='<button class="btn btn-sm py-0 text-warning" title="编辑" onclick="openEditor(\''+f.name+'\')"><i class="bi bi-pencil-square"></i></button>';}tr.innerHTML='<td>'+icon+' '+nameLink+'</td><td>'+(f.is_dir?'-':(f.size/1024).toFixed(1)+' KB')+'</td><td>'+f.mod_time+'</td><td>'+actions+'</td>';tbody.appendChild(tr);});document.getElementById('sftp-status').innerText="";}catch(e){document.getElementById('sftp-status').innerText="Error: "+e;}}
@@ -1217,7 +1186,6 @@ function initEditor(){if(!aceEditor){aceEditor=ace.edit("editor");const t=docume
 async function openEditor(fileName){initEditor();editingFilePath=currentPath+"/"+fileName;document.getElementById('editor-filename').innerText=fileName;document.getElementById('editor-status').innerText="读取中...";modalEditor.show();let ext=fileName.split('.').pop();let mode="ace/mode/text";const modeMap={'js':'javascript','json':'json','html':'html','css':'css','go':'golang','py':'python','sh':'sh','yaml':'yaml','yml':'yaml','md':'markdown','sql':'sql','xml':'xml','dockerfile':'dockerfile'};if(modeMap[ext])mode="ace/mode/"+modeMap[ext];aceEditor.session.setMode(mode);try{let res=await fetch('/api/sftp/cat?id='+currentServerId+'&path='+encodeURIComponent(editingFilePath));if(!res.ok)throw new Error("Read failed");let content=await res.text();aceEditor.setValue(content,-1);document.getElementById('editor-status').innerText="";}catch(e){aceEditor.setValue("");document.getElementById('editor-status').innerText="读取失败: "+e;}}
 async function saveFileContent(){if(!editingFilePath)return;let content=aceEditor.getValue();document.getElementById('editor-status').innerText="保存中...";let fd=new FormData();fd.append("id",currentServerId);fd.append("path",editingFilePath);fd.append("content",content);try{let res=await fetch('/api/sftp/save',{method:'POST',body:fd});if(res.ok){document.getElementById('editor-status').innerText="已保存 "+new Date().toLocaleTimeString();document.getElementById('editor-status').classList.add('text-success');setTimeout(()=>document.getElementById('editor-status').classList.remove('text-success'),2000);}else{alert("保存失败");document.getElementById('editor-status').innerText="保存失败";}}catch(e){alert("错误: "+e);}}
 
-// 2FA Functions
 const modal2FA = new bootstrap.Modal(document.getElementById('modal2FA'));
 let current2FASecret = "";
 async function open2FAModal() {
