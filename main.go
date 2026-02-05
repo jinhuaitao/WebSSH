@@ -68,7 +68,8 @@ type Database struct {
 	Credentials []Credential         `json:"credentials"`
 	Servers     []Server             `json:"servers"`
 	Snippets    []Snippet            `json:"snippets"`
-	Sessions    map[string]time.Time `json:"-"`
+	// 修改点1: 允许 Session 保存到文件，而不是忽略 ("-")
+	Sessions    map[string]time.Time `json:"sessions"`
 }
 
 type FileInfo struct {
@@ -97,6 +98,20 @@ func loadData() {
 	}
 	if db.Sessions == nil {
 		db.Sessions = make(map[string]time.Time)
+	}
+	
+	// 修改点2: 启动时清理过期的 Session，防止文件无限膨胀
+	now := time.Now()
+	dirty := false
+	for token, expiry := range db.Sessions {
+		if now.After(expiry) {
+			delete(db.Sessions, token)
+			dirty = true
+		}
+	}
+	// 如果有清理操作，且不是首次初始化，可以选择保存一下(这里暂不强制保存，等待下一次写入)
+	if dirty {
+		log.Println("已清理过期 Session")
 	}
 }
 
@@ -349,10 +364,27 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := fmt.Sprintf("%d", time.Now().UnixNano())
+	
+	// 修改点3: 持久化登录逻辑
+	// 30天有效期
+	const sessionDuration = 30 * 24 * time.Hour
+	expiry := time.Now().Add(sessionDuration)
+
 	dbLock.Lock()
-	db.Sessions[token] = time.Now().Add(24 * time.Hour)
+	db.Sessions[token] = expiry
 	dbLock.Unlock()
-	http.SetCookie(w, &http.Cookie{Name: "session_token", Value: token, Path: "/"})
+	
+	// 立即保存到磁盘，防止服务重启丢失 Session
+	saveData()
+
+	// 设置 MaxAge，让浏览器在关闭后保留 Cookie (30天)
+	http.SetCookie(w, &http.Cookie{
+		Name: "session_token", 
+		Value: token, 
+		Path: "/", 
+		MaxAge: int(sessionDuration.Seconds()), 
+		HttpOnly: true,
+	})
 
 	sendTelegramNotification(fmt.Sprintf("🔔 WebSSH 登录通知\n用户: %s\n方式: %s\nIP: %s\n时间: %s", user, loginType, r.RemoteAddr, time.Now().Format("2006-01-02 15:04:05")))
 	http.Redirect(w, r, "/", 302)
@@ -364,6 +396,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		dbLock.Lock()
 		delete(db.Sessions, cookie.Value)
 		dbLock.Unlock()
+		saveData() // 退出登录也立即同步到磁盘
 	}
 	http.SetCookie(w, &http.Cookie{Name: "session_token", Value: "", Path: "/", MaxAge: -1})
 	http.Redirect(w, r, "/", 302)
