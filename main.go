@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -68,7 +70,7 @@ type Database struct {
 	Credentials []Credential         `json:"credentials"`
 	Servers     []Server             `json:"servers"`
 	Snippets    []Snippet            `json:"snippets"`
-	// 修改点1: 允许 Session 保存到文件，而不是忽略 ("-")
+	// 修改: 允许 Session 保存到文件，实现持久化
 	Sessions    map[string]time.Time `json:"sessions"`
 }
 
@@ -86,6 +88,18 @@ var (
 	upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 )
 
+// --- 工具函数 ---
+
+// generateRandomToken 生成安全的随机 Session ID
+func generateRandomToken() string {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		// 如果随机数生成失败，回退到时间戳（极低概率）
+		return fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b)
+}
+
 // --- 数据持久化 ---
 
 func loadData() {
@@ -100,7 +114,7 @@ func loadData() {
 		db.Sessions = make(map[string]time.Time)
 	}
 	
-	// 修改点2: 启动时清理过期的 Session，防止文件无限膨胀
+	// 启动时清理过期 Session
 	now := time.Now()
 	dirty := false
 	for token, expiry := range db.Sessions {
@@ -109,9 +123,8 @@ func loadData() {
 			dirty = true
 		}
 	}
-	// 如果有清理操作，且不是首次初始化，可以选择保存一下(这里暂不强制保存，等待下一次写入)
 	if dirty {
-		log.Println("已清理过期 Session")
+		log.Println("已清理过期会话")
 	}
 }
 
@@ -363,10 +376,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		loginType = "2FA登录"
 	}
 
-	token := fmt.Sprintf("%d", time.Now().UnixNano())
+	// 安全修复：使用加密级随机数生成 Token
+	token := generateRandomToken()
 	
-	// 修改点3: 持久化登录逻辑
-	// 30天有效期
+	// 持久化逻辑：30天有效期
 	const sessionDuration = 30 * 24 * time.Hour
 	expiry := time.Now().Add(sessionDuration)
 
@@ -374,10 +387,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	db.Sessions[token] = expiry
 	dbLock.Unlock()
 	
-	// 立即保存到磁盘，防止服务重启丢失 Session
+	// 立即保存到磁盘
 	saveData()
 
-	// 设置 MaxAge，让浏览器在关闭后保留 Cookie (30天)
+	// 设置 Cookie MaxAge
 	http.SetCookie(w, &http.Cookie{
 		Name: "session_token", 
 		Value: token, 
@@ -396,7 +409,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		dbLock.Lock()
 		delete(db.Sessions, cookie.Value)
 		dbLock.Unlock()
-		saveData() // 退出登录也立即同步到磁盘
+		saveData()
 	}
 	http.SetCookie(w, &http.Cookie{Name: "session_token", Value: "", Path: "/", MaxAge: -1})
 	http.Redirect(w, r, "/", 302)
