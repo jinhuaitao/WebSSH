@@ -39,11 +39,11 @@ touch data.json && chmod 666 data.json && docker run -d --name webssh --restart=
 
 数据文件 data.json 会挂载在当前目录下，迁移方便。
 
-方法二：使用管理脚本
+# 推荐安装方式方法二：使用管理脚本
 如果您使用的是 Linux 服务器，可以使用我们要提供的管理脚本进行安装、升级和卸载：
 
 Bash
-# 推荐安装方式
+
 # 下载并运行脚本
 ```
 wget -O webssh.sh https://raw.githubusercontent.com/jinhuaitao/WebSSH/main/webssh.sh && chmod +x webssh.sh && ./webssh.sh
