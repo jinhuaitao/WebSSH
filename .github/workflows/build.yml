@@ -19,10 +19,10 @@ jobs:
         include:
           - os: linux
             arch: amd64
-            filename: relay-linux-amd64
+            filename: webssh-linux-amd64
           - os: linux
             arch: arm64
-            filename: relay-linux-arm64
+            filename: webssh-linux-arm64
 
     steps:
       - name: Checkout code
