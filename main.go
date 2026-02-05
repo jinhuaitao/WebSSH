@@ -210,6 +210,7 @@ func main() {
 	http.HandleFunc("/api/sftp/list", handleSFTPList)
 	http.HandleFunc("/api/sftp/download", handleSFTPDownload)
 	http.HandleFunc("/api/sftp/upload", handleSFTPUpload)
+	http.HandleFunc("/api/sftp/delete", handleSFTPDelete) // 新增删除路由
 	http.HandleFunc("/api/sftp/cat", handleSFTPCat)
 	http.HandleFunc("/api/sftp/save", handleSFTPSave)
 
@@ -803,6 +804,46 @@ func handleSFTPUpload(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
+func handleSFTPDelete(w http.ResponseWriter, r *http.Request) {
+	if !checkAuth(r) {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	if r.Method != "POST" {
+		http.Error(w, "405", 405)
+		return
+	}
+	serverID := r.FormValue("id")
+	path := r.FormValue("path")
+
+	client, err := getSSHClient(serverID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer client.Close()
+
+	sftpClient, err := sftp.NewClient(client)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer sftpClient.Close()
+
+	// 先尝试删除文件
+	err = sftpClient.Remove(path)
+	if err != nil {
+		// 如果失败，尝试删除目录 (必须为空目录)
+		err = sftpClient.RemoveDirectory(path)
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Write([]byte("ok"))
+}
+
 func handleSFTPCat(w http.ResponseWriter, r *http.Request) {
 	if !checkAuth(r) {
 		http.Error(w, "Unauthorized", 401)
@@ -1179,8 +1220,9 @@ function openTerminal(id,name){currentServerId=id;document.getElementById('termT
 socket=new WebSocket(proto+location.host+'/ws/ssh?id='+id+'&cols='+term.cols+'&rows='+term.rows);socket.onmessage=(ev)=>{if(typeof ev.data==='string')term.write(ev.data);else{let r=new FileReader();r.onload=()=>term.write(r.result);r.readAsText(ev.data);}};term.onData(d=>socket.send(d));socket.onclose=()=>term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');window.onresize=()=>f.fit();},500);}
 function closeTerm(){if(socket)socket.close();if(term)term.dispose();termModal.hide();}
 function sendCommand(cmd){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(cmd+"\n");term.focus();}}
-async function loadSFTP(path){if(!path)path=currentPath;if(path==='..'){let p=currentPath.split('/');p.pop();path=p.join('/')||'/';}document.getElementById('sftp-status').innerText="加载中...";try{let res=await fetch('/api/sftp/list?id='+currentServerId+'&path='+encodeURIComponent(path));let data=await res.json();currentPath=data.path;document.getElementById('sftp-path').value=currentPath;let tbody=document.getElementById('sftp-list');tbody.innerHTML='';data.files.forEach(f=>{let tr=document.createElement('tr');let icon=f.is_dir?'<i class="bi bi-folder-fill text-warning"></i>':'<i class="bi bi-file-earmark-text text-secondary"></i>';let clickFn=f.is_dir?"loadSFTP('"+currentPath+"/"+f.name+"')":"";let nameLink='<span class="cursor-pointer text-primary" onclick="'+clickFn+'">'+f.name+'</span>';let actions='';if(!f.is_dir){actions+='<button class="btn btn-sm py-0 me-2 text-info" title="下载" onclick="window.open(\'/api/sftp/download?id='+currentServerId+'&path='+encodeURIComponent(currentPath+'/'+f.name)+'\')"><i class="bi bi-download"></i></button>';actions+='<button class="btn btn-sm py-0 text-warning" title="编辑" onclick="openEditor(\''+f.name+'\')"><i class="bi bi-pencil-square"></i></button>';}tr.innerHTML='<td>'+icon+' '+nameLink+'</td><td>'+(f.is_dir?'-':(f.size/1024).toFixed(1)+' KB')+'</td><td>'+f.mod_time+'</td><td>'+actions+'</td>';tbody.appendChild(tr);});document.getElementById('sftp-status').innerText="";}catch(e){document.getElementById('sftp-status').innerText="Error: "+e;}}
+async function loadSFTP(path){if(!path)path=currentPath;if(path==='..'){let p=currentPath.split('/');p.pop();path=p.join('/')||'/';}document.getElementById('sftp-status').innerText="加载中...";try{let res=await fetch('/api/sftp/list?id='+currentServerId+'&path='+encodeURIComponent(path));let data=await res.json();currentPath=data.path;document.getElementById('sftp-path').value=currentPath;let tbody=document.getElementById('sftp-list');tbody.innerHTML='';data.files.forEach(f=>{let tr=document.createElement('tr');let icon=f.is_dir?'<i class="bi bi-folder-fill text-warning"></i>':'<i class="bi bi-file-earmark-text text-secondary"></i>';let clickFn=f.is_dir?"loadSFTP('"+currentPath+"/"+f.name+"')":"";let nameLink='<span class="cursor-pointer text-primary" onclick="'+clickFn+'">'+f.name+'</span>';let actions='';if(!f.is_dir){actions+='<button class="btn btn-sm py-0 me-2 text-info" title="下载" onclick="window.open(\'/api/sftp/download?id='+currentServerId+'&path='+encodeURIComponent(currentPath+'/'+f.name)+'\')"><i class="bi bi-download"></i></button>';actions+='<button class="btn btn-sm py-0 text-warning" title="编辑" onclick="openEditor(\''+f.name+'\')"><i class="bi bi-pencil-square"></i></button>';}if(f.name!=='..'){actions+='<button class="btn btn-sm py-0 ms-2 text-danger" title="删除" onclick="deleteFile(\''+f.name+'\')"><i class="bi bi-trash"></i></button>';}tr.innerHTML='<td>'+icon+' '+nameLink+'</td><td>'+(f.is_dir?'-':(f.size/1024).toFixed(1)+' KB')+'</td><td>'+f.mod_time+'</td><td>'+actions+'</td>';tbody.appendChild(tr);});document.getElementById('sftp-status').innerText="";}catch(e){document.getElementById('sftp-status').innerText="Error: "+e;}}
 async function uploadFile(input){if(input.files.length===0)return;let fd=new FormData();fd.append("file",input.files[0]);fd.append("id",currentServerId);fd.append("path",currentPath);document.getElementById('sftp-status').innerText="上传中...";let res=await fetch('/api/sftp/upload',{method:'POST',body:fd});if(res.ok){loadSFTP();alert('上传成功');}else{alert('上传失败');}input.value='';}
+async function deleteFile(fileName){showConfirm("确定要删除 "+fileName+" 吗？此操作不可恢复！",async()=>{let fd=new FormData();fd.append("id",currentServerId);fd.append("path",currentPath+"/"+fileName);let res=await fetch('/api/sftp/delete',{method:'POST',body:fd});if(res.ok){loadSFTP();alert('删除成功');}else{alert('删除失败: 可能是目录非空');}});}
 let aceEditor,editingFilePath="";const modalEditor=new bootstrap.Modal(document.getElementById('modalEditor'));
 function initEditor(){if(!aceEditor){aceEditor=ace.edit("editor");const t=document.body.getAttribute('data-theme')||'dark';aceEditor.setTheme(t==='dark'?'ace/theme/monokai':'ace/theme/chrome');aceEditor.session.setMode("ace/mode/text");aceEditor.setFontSize(14);aceEditor.commands.addCommand({name:'save',bindKey:{win:'Ctrl-S',mac:'Command-S'},exec:function(){saveFileContent();}});}}
 async function openEditor(fileName){initEditor();editingFilePath=currentPath+"/"+fileName;document.getElementById('editor-filename').innerText=fileName;document.getElementById('editor-status').innerText="读取中...";modalEditor.show();let ext=fileName.split('.').pop();let mode="ace/mode/text";const modeMap={'js':'javascript','json':'json','html':'html','css':'css','go':'golang','py':'python','sh':'sh','yaml':'yaml','yml':'yaml','md':'markdown','sql':'sql','xml':'xml','dockerfile':'dockerfile'};if(modeMap[ext])mode="ace/mode/"+modeMap[ext];aceEditor.session.setMode(mode);try{let res=await fetch('/api/sftp/cat?id='+currentServerId+'&path='+encodeURIComponent(editingFilePath));if(!res.ok)throw new Error("Read failed");let content=await res.text();aceEditor.setValue(content,-1);document.getElementById('editor-status').innerText="";}catch(e){aceEditor.setValue("");document.getElementById('editor-status').innerText="读取失败: "+e;}}
