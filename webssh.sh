@@ -3,11 +3,15 @@
 # =========================================================
 #  WebSSH Manager - One-Click Installer
 #  System: Debian/Ubuntu (Systemd) & Alpine (OpenRC)
+#  Arch: AMD64 & ARM64 Auto-Detect
 # =========================================================
 
 # --- 基础配置 ---
-# 已更新为你提供的真实下载地址
-DOWNLOAD_URL="https://jht126.eu.org/https://github.com/jinhuaitao/WebSSH/releases/latest/download/webssh"
+# GitHub 代理前缀
+GH_PROXY="https://jht126.eu.org/"
+# 仓库发布地址根目录
+GH_REPO="https://github.com/jinhuaitao/WebSSH/releases/latest/download"
+
 BIN_PATH="/usr/local/bin/webssh"
 SERVICE_NAME="webssh"
 # 数据持久化目录
@@ -31,6 +35,7 @@ ICON_INFO="ℹ️"
 ICON_ROCKET="🚀"
 ICON_TRASH="🗑️"
 ICON_GLOBE="🌍"
+ICON_CPU="🖥️"
 
 # --- UI 辅助函数 ---
 
@@ -51,7 +56,7 @@ print_logo() {
     echo "| |/ |/ /  __/ /_/ /__/ /__/ / __  /  "
     echo "|__/|__/\___/_.___/____/____/_/ /_/   "
     echo -e "${PLAIN}"
-    echo -e "   ${YELLOW}WebSSH 终端管理脚本${PLAIN}"
+    echo -e "   ${YELLOW}WebSSH 终端管理脚本 (多架构版)${PLAIN}"
     print_line
 }
 
@@ -83,7 +88,6 @@ check_root() {
 check_dependencies() {
     local missing_deps=0
     if ! command -v wget >/dev/null; then missing_deps=1; fi
-    # 如果是 Alpine，可能还需要 curl 或其他工具，这里主要检查 wget
     
     if [ $missing_deps -eq 1 ]; then
         log_info "正在安装必要组件 (wget)..."
@@ -98,21 +102,46 @@ check_dependencies() {
     fi
 }
 
+# --- 新增：架构检测函数 ---
+check_arch() {
+    local arch_raw=$(uname -m)
+    case "${arch_raw}" in
+        x86_64|amd64)
+            ARCH="amd64"
+            BINARY_NAME="webssh-linux-amd64"
+            ;;
+        aarch64|arm64)
+            ARCH="arm64"
+            BINARY_NAME="webssh-linux-arm64"
+            ;;
+        *)
+            log_error "不支持的 CPU 架构: ${arch_raw}"
+            exit 1
+            ;;
+    esac
+    log_info "检测到系统架构: ${GREEN}${ARCH}${PLAIN}"
+}
+
 # --- 核心功能 ---
 
 install_webssh() {
     print_logo
-    echo -e "${BOLD}正在开始安装 WebSSH...${PLAIN}\n"
-    
+    check_root
     check_dependencies
+    
+    # 1. 检测架构并生成下载链接
+    check_arch
+    DOWNLOAD_URL="${GH_PROXY}${GH_REPO}/${BINARY_NAME}"
+    
+    echo -e "${BOLD}正在开始安装 WebSSH (${ARCH})...${PLAIN}\n"
 
-    # 1. 准备目录和数据文件
+    # 2. 准备目录和数据文件
     log_info "正在准备运行环境..."
     if [ ! -d "$DATA_DIR" ]; then
         mkdir -p "$DATA_DIR"
     fi
     
-    # 关键步骤：确保 data.json 是文件而不是文件夹，且有权限
+    # 确保 data.json 是文件而不是文件夹，且有权限
     if [ ! -f "$DATA_FILE" ]; then
         if [ -d "$DATA_FILE" ]; then
             rm -rf "$DATA_FILE"
@@ -122,17 +151,18 @@ install_webssh() {
         log_success "配置文件初始化成功"
     else
         log_info "检测到已有配置文件，保留现有配置"
-        chmod 666 "$DATA_FILE" # 确保权限正确
+        chmod 666 "$DATA_FILE"
     fi
 
-    # 2. 下载二进制文件
-    log_info "正在下载最新版本..."
-    # 无论是否存在旧文件，都强制覆盖下载，实现“更新”功能
+    # 3. 下载二进制文件
+    log_info "正在下载: ${BINARY_NAME}"
+    # -O 参数将下载的文件重命名为 webssh，确保后续服务配置通用
     wget -q --show-progress -O "$BIN_PATH" "$DOWNLOAD_URL"
     
     if [ $? -ne 0 ]; then
         echo ""
-        log_error "下载失败！请检查服务器网络或下载链接有效性。"
+        log_error "下载失败！"
+        log_error "链接: $DOWNLOAD_URL"
         rm -f "$BIN_PATH"
         read -p "按回车键返回..."
         return
@@ -142,7 +172,7 @@ install_webssh() {
     echo ""
     log_success "下载成功，安装路径: ${CYAN}$BIN_PATH${PLAIN}"
 
-    # 3. 配置服务
+    # 4. 配置服务
     log_info "正在配置系统服务..."
     
     if [ -f /etc/alpine-release ]; then
@@ -153,7 +183,6 @@ name="webssh"
 command="$BIN_PATH"
 command_background=true
 pidfile="/run/${SERVICE_NAME}.pid"
-# 切换到数据目录运行，确保能读取到 data.json
 directory="$DATA_DIR"
 
 depend() {
@@ -167,7 +196,7 @@ EOF
         log_success "OpenRC 服务已安装并启动"
 
     elif command -v systemctl >/dev/null; then
-        # --- Systemd 配置 (Debian/Ubuntu/CentOS) ---
+        # --- Systemd 配置 ---
         cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOF
 [Unit]
 Description=WebSSH Service
@@ -175,7 +204,6 @@ After=network.target
 
 [Service]
 Type=simple
-# 关键：设置工作目录，程序会在这个目录下寻找 data.json
 WorkingDirectory=$DATA_DIR
 ExecStart=$BIN_PATH
 Restart=always
@@ -189,11 +217,11 @@ EOF
         systemctl restart $SERVICE_NAME
         log_success "Systemd 服务已安装并启动"
     else
-        log_warn "未识别到 Systemd 或 OpenRC，仅完成了文件下载，未配置自启。"
-        log_info "你可以尝试手动运行: $BIN_PATH (需先 cd 到 $DATA_DIR)"
+        log_warn "未识别到 Systemd 或 OpenRC，仅下载了文件。"
+        log_info "手动运行: $BIN_PATH (需先 cd 到 $DATA_DIR)"
     fi
 
-    # 4. 获取 IP 地址
+    # 5. 获取 IP 地址
     log_info "正在检测服务器 IP 地址..."
     SERVER_IP=$(wget -qO- -t1 -T2 ipv4.icanhazip.com)
     if [ -z "$SERVER_IP" ]; then
@@ -207,6 +235,7 @@ EOF
     print_line
     echo -e " ${ICON_ROCKET} ${GREEN}WebSSH 安装完成！${PLAIN}"
     print_line
+    echo -e " 架构版本: ${GREEN}${BINARY_NAME}${PLAIN}"
     echo -e " 运行状态: ${GREEN}Active${PLAIN}"
     echo -e " 安装位置: ${CYAN}$BIN_PATH${PLAIN}"
     echo -e " 数据文件: ${CYAN}$DATA_FILE${PLAIN}"
@@ -243,7 +272,7 @@ uninstall_webssh() {
         rm -f "$BIN_PATH"
         log_success "程序文件已删除"
     else
-        log_warn "未找到程序文件 (可能已被删除)"
+        log_warn "未找到程序文件"
     fi
 
     # 询问是否删除数据
@@ -255,7 +284,7 @@ uninstall_webssh() {
         rm -rf "$DATA_DIR"
         log_success "配置文件已彻底清除"
     else
-        log_info "配置文件已保留，下次安装可直接使用"
+        log_info "配置文件已保留"
     fi
 
     echo ""
@@ -277,7 +306,7 @@ show_menu() {
         echo -e " ${GREEN}0.${PLAIN} 退出脚本 ${YELLOW}(Exit)${PLAIN}"
         echo ""
         print_line
-        echo -e "${CYAN}说明: 支持 Debian/Ubuntu/Alpine 等常见 Linux 发行版${PLAIN}"
+        echo -e "${CYAN}说明: 支持 AMD64/ARM64 架构，支持 Debian/Ubuntu/Alpine${PLAIN}"
         echo ""
         read -p " 请输入选项 [0-2]: " choice
         
