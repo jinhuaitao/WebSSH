@@ -1181,7 +1181,7 @@ const dashBody = `<div class="sidebar">
     </div>
     <div id="group-{{$g.ID}}" class="collapse show"><div class="row">
         {{range $s := $.Servers}}{{if eq $s.GroupID $g.ID}}
-        <div class="col-12" id="item-server-{{$s.ID}}"><div class="server-item">
+        <div class="col-md-6 col-12" id="item-server-{{$s.ID}}"><div class="server-item">
             <div class="server-info"><div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="bi bi-hdd-network"></i></div><div><div class="fw-bold">{{$s.Name}}</div><div class="small text-muted font-monospace">{{$s.IP}}:{{$s.Port}}</div></div></div>
             <div class="server-actions"><button class="btn btn-primary btn-sm" onclick="openTerminal('{{$s.ID}}','{{$s.Name}}')"><i class="bi bi-terminal me-1"></i>连接</button><button class="btn btn-action btn-sm btn-icon" onclick="editItem('server','{{$s.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-danger-soft btn-sm btn-icon" onclick="deleteItem('server','{{$s.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div>
         </div></div>
