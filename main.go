@@ -769,12 +769,35 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 		realPath = path
 	}
 	var fileList []FileInfo
+	// 保持返回上一级的 ".." 永远在最顶部
 	if realPath != "/" && realPath != "." {
 		fileList = append(fileList, FileInfo{Name: "..", IsDir: true})
 	}
+
+	// 定义两个切片分别存放文件夹和普通文件
+	var dirs []FileInfo
+	var regularFiles []FileInfo
+
 	for _, f := range files {
-		fileList = append(fileList, FileInfo{Name: f.Name(), Size: f.Size(), ModTime: f.ModTime().Format("2006-01-02 15:04"), IsDir: f.IsDir()})
+		item := FileInfo{
+			Name:    f.Name(),
+			Size:    f.Size(),
+			ModTime: f.ModTime().Format("2006-01-02 15:04"),
+			IsDir:   f.IsDir(),
+		}
+		
+		// 分类存放
+		if f.IsDir() {
+			dirs = append(dirs, item)
+		} else {
+			regularFiles = append(regularFiles, item)
+		}
 	}
+
+	// 按照先文件夹、后文件的顺序合并
+	fileList = append(fileList, dirs...)
+	fileList = append(fileList, regularFiles...)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"path": realPath, "files": fileList})
 }
