@@ -6,6 +6,12 @@ FROM golang:1.24-alpine AS builder
 # 设置工作目录
 WORKDIR /build
 
+# 【修复 1】：安装 git，防止拉取 github 依赖时因为找不到 git 命令而报错退出
+RUN apk add --no-cache git
+
+# 【修复 2】：设置国内 GOPROXY 代理，解决 golang.org 依赖包拉取超时的问题
+ENV GOPROXY=https://goproxy.cn,direct
+
 # 复制源代码到容器中
 COPY main.go .
 
@@ -15,7 +21,6 @@ RUN go mod init webssh && \
 
 # 编译 Go 源码
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o webssh-app main.go
-
 
 # ==========================================
 # 第二阶段：运行环境 (Final)
