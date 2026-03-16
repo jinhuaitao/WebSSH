@@ -1,16 +1,15 @@
 # ==========================================
-# 第一阶段：构建环境 (Builder) - 升级到 1.24
+# 第一阶段：构建环境 (Builder)
+# 使用 golang:alpine 默认拉取最新稳定版 (包含 1.25+)，解决 crypto 依赖报错
 # ==========================================
-FROM golang:1.24-alpine AS builder
+FROM golang:alpine AS builder
 
 # 设置工作目录
 WORKDIR /build
 
-# 【修复 1】：安装 git，防止拉取 github 依赖时因为找不到 git 命令而报错退出
+# 安装 git（Alpine 镜像精简，部分 go mod 拉取强依赖 git）
+# 注意：GitHub 环境网络畅通，不需要配置 GOPROXY 代理
 RUN apk add --no-cache git
-
-# 【修复 2】：设置国内 GOPROXY 代理，解决 golang.org 依赖包拉取超时的问题
-ENV GOPROXY=https://goproxy.cn,direct
 
 # 复制源代码到容器中
 COPY main.go .
@@ -19,8 +18,9 @@ COPY main.go .
 RUN go mod init webssh && \
     go mod tidy
 
-# 编译 Go 源码
+# 编译 Go 源码 (关闭 CGO，指定 Linux 系统，压缩体积)
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o webssh-app main.go
+
 
 # ==========================================
 # 第二阶段：运行环境 (Final)
@@ -30,7 +30,7 @@ FROM alpine:latest
 # 设置工作目录
 WORKDIR /app
 
-# 安装必要的系统组件
+# 安装必要的系统组件 (HTTPS 证书与时区数据)
 RUN apk --no-cache add ca-certificates tzdata
 
 # 设置默认时区（以亚洲/上海为例）
