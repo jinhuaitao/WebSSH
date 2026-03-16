@@ -13,6 +13,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"       // 新增这一行
+	"strings"
 	"strconv"
 	"sync"
 	"time"
@@ -787,12 +789,22 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 		}
 		
 		// 分类存放
+		// 分类存放
 		if f.IsDir() {
 			dirs = append(dirs, item)
 		} else {
 			regularFiles = append(regularFiles, item)
 		}
 	}
+
+	// --- 新增：按字母顺序排序（忽略大小写） ---
+	sort.Slice(dirs, func(i, j int) bool {
+		return strings.ToLower(dirs[i].Name) < strings.ToLower(dirs[j].Name)
+	})
+	sort.Slice(regularFiles, func(i, j int) bool {
+		return strings.ToLower(regularFiles[i].Name) < strings.ToLower(regularFiles[j].Name)
+	})
+	// ----------------------------------------
 
 	// 按照先文件夹、后文件的顺序合并
 	fileList = append(fileList, dirs...)
