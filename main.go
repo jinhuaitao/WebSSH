@@ -13,9 +13,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"       // 新增这一行
-	"strings"
+	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -72,7 +72,6 @@ type Database struct {
 	Credentials []Credential         `json:"credentials"`
 	Servers     []Server             `json:"servers"`
 	Snippets    []Snippet            `json:"snippets"`
-	// 修改: 允许 Session 保存到文件，实现持久化
 	Sessions    map[string]time.Time `json:"sessions"`
 }
 
@@ -115,7 +114,7 @@ func loadData() {
 	if db.Sessions == nil {
 		db.Sessions = make(map[string]time.Time)
 	}
-	
+
 	// 启动时清理过期 Session
 	now := time.Now()
 	dirty := false
@@ -211,7 +210,6 @@ func getSSHClient(serverID string) (*ssh.Client, error) {
 		Timeout:         5 * time.Second,
 	}
 
-	// 兼容 IPv6: 使用 net.JoinHostPort
 	targetAddr := net.JoinHostPort(srv.IP, strconv.Itoa(srv.Port))
 	return ssh.Dial("tcp", targetAddr, config)
 }
@@ -228,7 +226,6 @@ func main() {
 	http.HandleFunc("/api/backup", handleBackup)
 	http.HandleFunc("/api/restore", handleRestore)
 
-	// --- PWA Routes ---
 	http.HandleFunc("/manifest.json", handleManifest)
 	http.HandleFunc("/sw.js", handleServiceWorker)
 
@@ -378,10 +375,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		loginType = "2FA登录"
 	}
 
-	// 安全修复：使用加密级随机数生成 Token
 	token := generateRandomToken()
 	
-	// 持久化逻辑：30天有效期
 	const sessionDuration = 30 * 24 * time.Hour
 	expiry := time.Now().Add(sessionDuration)
 
@@ -389,10 +384,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	db.Sessions[token] = expiry
 	dbLock.Unlock()
 	
-	// 立即保存到磁盘
 	saveData()
 
-	// 设置 Cookie MaxAge
 	http.SetCookie(w, &http.Cookie{
 		Name: "session_token", 
 		Value: token, 
@@ -556,7 +549,6 @@ func handleSaveData(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			db.Groups = n
-			// 删除分组时，将该组下的服务器重置为无分组
 			for i := range db.Servers {
 				if db.Servers[i].GroupID == req.DeleteID {
 					db.Servers[i].GroupID = ""
@@ -594,19 +586,15 @@ func handleSaveData(w http.ResponseWriter, r *http.Request) {
 		}
 	case "server":
 		if req.Action == "add" {
-			// --- 自动添加默认分组逻辑开始 ---
 			if req.Server.GroupID == "" {
 				var defaultGroupID string
-				// 1. 查找是否存在名为 "默认分组" 的组
 				for _, g := range db.Groups {
 					if g.Name == "默认分组" {
 						defaultGroupID = g.ID
 						break
 					}
 				}
-				// 2. 如果不存在，则创建
 				if defaultGroupID == "" {
-					// 生成一个简易的时间戳ID
 					defaultGroupID = fmt.Sprintf("%d", time.Now().UnixNano())
 					newGroup := Group{
 						ID:   defaultGroupID,
@@ -614,11 +602,8 @@ func handleSaveData(w http.ResponseWriter, r *http.Request) {
 					}
 					db.Groups = append(db.Groups, newGroup)
 				}
-				// 3. 将服务器归入该组
 				req.Server.GroupID = defaultGroupID
 			}
-			// --- 自动添加默认分组逻辑结束 ---
-
 			db.Servers = append(db.Servers, req.Server)
 		}
 		if req.Action == "delete" {
@@ -712,7 +697,9 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 	modes := ssh.TerminalModes{ssh.ECHO: 1, ssh.TTY_OP_ISPEED: 14400, ssh.TTY_OP_OSPEED: 14400}
-	if err := session.RequestPty("xterm", rows, cols, modes); err != nil {
+	
+	// 这里修改为请求 xterm-256color 支持颜色高亮
+	if err := session.RequestPty("xterm-256color", rows, cols, modes); err != nil {
 		return
 	}
 	stdin, _ := session.StdinPipe()
@@ -723,6 +710,14 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	if err := session.Shell(); err != nil {
 		return
 	}
+
+	// 在 Shell 连接成功后，自动注入环境变量和彩色别名，然后清屏
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		initCmd := "export TERM=xterm-256color; alias ls='ls --color=auto'; alias grep='grep --color=auto'; clear\n"
+		stdin.Write([]byte(initCmd))
+	}()
+
 	for {
 		_, msg, err := ws.ReadMessage()
 		if err != nil {
@@ -771,12 +766,10 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 		realPath = path
 	}
 	var fileList []FileInfo
-	// 保持返回上一级的 ".." 永远在最顶部
 	if realPath != "/" && realPath != "." {
 		fileList = append(fileList, FileInfo{Name: "..", IsDir: true})
 	}
 
-	// 定义两个切片分别存放文件夹和普通文件
 	var dirs []FileInfo
 	var regularFiles []FileInfo
 
@@ -788,8 +781,6 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 			IsDir:   f.IsDir(),
 		}
 		
-		// 分类存放
-		// 分类存放
 		if f.IsDir() {
 			dirs = append(dirs, item)
 		} else {
@@ -797,16 +788,13 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// --- 新增：按字母顺序排序（忽略大小写） ---
 	sort.Slice(dirs, func(i, j int) bool {
 		return strings.ToLower(dirs[i].Name) < strings.ToLower(dirs[j].Name)
 	})
 	sort.Slice(regularFiles, func(i, j int) bool {
 		return strings.ToLower(regularFiles[i].Name) < strings.ToLower(regularFiles[j].Name)
 	})
-	// ----------------------------------------
 
-	// 按照先文件夹、后文件的顺序合并
 	fileList = append(fileList, dirs...)
 	fileList = append(fileList, regularFiles...)
 
@@ -1297,7 +1285,18 @@ async function updateSettings(type){let payload={type:"settings",action:"update"
 async function restoreData(){let fileInput=document.getElementById('restore-file');if(fileInput.files.length===0)return alert('请选择备份文件');showConfirm("确定恢复数据？这将覆盖当前所有配置！",async()=>{let fd=new FormData();fd.append("backup_file",fileInput.files[0]);let res=await fetch('/api/restore',{method:'POST',body:fd});if(res.ok){alert('恢复成功，请重新登录');location.reload();}else{alert('恢复失败');}});}
 let term,socket,currentPath=".";const termModal=new bootstrap.Modal(document.getElementById('termModal'));
 function toggleQuickCmd(show){const btn=document.getElementById('btn-quick-cmd');if(show)btn.classList.remove('d-none');else btn.classList.add('d-none');}
-function openTerminal(id,name){currentServerId=id;document.getElementById('termTitle').innerText=name;toggleQuickCmd(true);document.querySelector('#termTabs a[href="#tab-ssh"]').click();termModal.show();const menu=document.getElementById('quick-snippets-menu');menu.innerHTML='';if(dbData.snippets&&dbData.snippets.length===0){menu.innerHTML='<li><span class="dropdown-item text-muted">暂无快捷指令</span></li>';}else if(dbData.snippets){dbData.snippets.forEach(s=>{let li=document.createElement('li');let a=document.createElement('a');a.className='dropdown-item cursor-pointer';a.innerHTML='<strong>'+s.name+'</strong><br><small class="text-muted" style="font-size:0.7em">'+s.command.substring(0,25)+'...</small>';a.onclick=function(){sendCommand(s.command);};li.appendChild(a);menu.appendChild(li);});}setTimeout(()=>{const c=document.getElementById('terminal');c.innerHTML='';const isLight=document.body.getAttribute('data-theme')==='light';const themeObj=isLight?{background:'#ffffff',foreground:'#000000',cursor:'#000000',selection:'rgba(0,0,0,0.3)'}:{background:'#000000',foreground:'#ffffff'};term=new Terminal({cursorBlink:true,fontSize:14,fontFamily:'Menlo, Monaco, "Courier New", monospace',theme:themeObj});const f=new FitAddon.FitAddon();term.loadAddon(f);term.open(c);f.fit();let proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+function openTerminal(id,name){currentServerId=id;document.getElementById('termTitle').innerText=name;toggleQuickCmd(true);document.querySelector('#termTabs a[href="#tab-ssh"]').click();termModal.show();const menu=document.getElementById('quick-snippets-menu');menu.innerHTML='';if(dbData.snippets&&dbData.snippets.length===0){menu.innerHTML='<li><span class="dropdown-item text-muted">暂无快捷指令</span></li>';}else if(dbData.snippets){dbData.snippets.forEach(s=>{let li=document.createElement('li');let a=document.createElement('a');a.className='dropdown-item cursor-pointer';a.innerHTML='<strong>'+s.name+'</strong><br><small class="text-muted" style="font-size:0.7em">'+s.command.substring(0,25)+'...</small>';a.onclick=function(){sendCommand(s.command);};li.appendChild(a);menu.appendChild(li);});}setTimeout(()=>{const c=document.getElementById('terminal');c.innerHTML='';const isLight=document.body.getAttribute('data-theme')==='light';
+// 更新为 VS Code 级别的主题配色
+const themeObj = isLight ? {
+    background: '#ffffff', foreground: '#333333', cursor: '#0066cc', selection: 'rgba(0, 102, 204, 0.2)',
+    black: '#000000', red: '#cd3131', green: '#00bc00', yellow: '#949800', blue: '#0451a5', magenta: '#bc05bc', cyan: '#0598bc', white: '#555555',
+    brightBlack: '#666666', brightRed: '#cd3131', brightGreen: '#14ce14', brightYellow: '#b5ba00', brightBlue: '#0451a5', brightMagenta: '#bc05bc', brightCyan: '#0598bc', brightWhite: '#a5a5a5'
+} : {
+    background: '#1e1e1e', foreground: '#d4d4d4', cursor: '#ffffff', selection: 'rgba(255, 255, 255, 0.3)',
+    black: '#000000', red: '#f14c4c', green: '#23d18b', yellow: '#f5f543', blue: '#3b8eea', magenta: '#d670d6', cyan: '#29b8db', white: '#e5e5e5',
+    brightBlack: '#666666', brightRed: '#f14c4c', brightGreen: '#23d18b', brightYellow: '#f5f543', brightBlue: '#3b8eea', brightMagenta: '#d670d6', brightCyan: '#29b8db', brightWhite: '#e5e5e5'
+};
+term=new Terminal({cursorBlink:true,fontSize:14,fontFamily:'Menlo, Monaco, "Courier New", monospace',theme:themeObj});const f=new FitAddon.FitAddon();term.loadAddon(f);term.open(c);f.fit();let proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
 socket=new WebSocket(proto+location.host+'/ws/ssh?id='+id+'&cols='+term.cols+'&rows='+term.rows);socket.onmessage=(ev)=>{if(typeof ev.data==='string')term.write(ev.data);else{let r=new FileReader();r.onload=()=>term.write(r.result);r.readAsText(ev.data);}};term.onData(d=>socket.send(d));socket.onclose=()=>term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');window.onresize=()=>f.fit();},500);}
 function closeTerm(){if(socket)socket.close();if(term)term.dispose();termModal.hide();}
 function sendCommand(cmd){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(cmd+"\n");term.focus();}}
