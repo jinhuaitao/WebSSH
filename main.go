@@ -698,7 +698,7 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 	modes := ssh.TerminalModes{ssh.ECHO: 1, ssh.TTY_OP_ISPEED: 14400, ssh.TTY_OP_OSPEED: 14400}
 	
-	// 这里修改为请求 xterm-256color 支持颜色高亮
+	// 保留 xterm-256color 支持颜色高亮
 	if err := session.RequestPty("xterm-256color", rows, cols, modes); err != nil {
 		return
 	}
@@ -710,13 +710,6 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	if err := session.Shell(); err != nil {
 		return
 	}
-
-	// 在 Shell 连接成功后，自动注入环境变量和彩色别名，然后清屏
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		initCmd := "export TERM=xterm-256color; alias ls='ls --color=auto'; alias grep='grep --color=auto'; clear\n"
-		stdin.Write([]byte(initCmd))
-	}()
 
 	for {
 		_, msg, err := ws.ReadMessage()
@@ -1286,7 +1279,6 @@ async function restoreData(){let fileInput=document.getElementById('restore-file
 let term,socket,currentPath=".";const termModal=new bootstrap.Modal(document.getElementById('termModal'));
 function toggleQuickCmd(show){const btn=document.getElementById('btn-quick-cmd');if(show)btn.classList.remove('d-none');else btn.classList.add('d-none');}
 function openTerminal(id,name){currentServerId=id;document.getElementById('termTitle').innerText=name;toggleQuickCmd(true);document.querySelector('#termTabs a[href="#tab-ssh"]').click();termModal.show();const menu=document.getElementById('quick-snippets-menu');menu.innerHTML='';if(dbData.snippets&&dbData.snippets.length===0){menu.innerHTML='<li><span class="dropdown-item text-muted">暂无快捷指令</span></li>';}else if(dbData.snippets){dbData.snippets.forEach(s=>{let li=document.createElement('li');let a=document.createElement('a');a.className='dropdown-item cursor-pointer';a.innerHTML='<strong>'+s.name+'</strong><br><small class="text-muted" style="font-size:0.7em">'+s.command.substring(0,25)+'...</small>';a.onclick=function(){sendCommand(s.command);};li.appendChild(a);menu.appendChild(li);});}setTimeout(()=>{const c=document.getElementById('terminal');c.innerHTML='';const isLight=document.body.getAttribute('data-theme')==='light';
-// 更新为 VS Code 级别的主题配色
 const themeObj = isLight ? {
     background: '#ffffff', foreground: '#333333', cursor: '#0066cc', selection: 'rgba(0, 102, 204, 0.2)',
     black: '#000000', red: '#cd3131', green: '#00bc00', yellow: '#949800', blue: '#0451a5', magenta: '#bc05bc', cyan: '#0598bc', white: '#555555',
