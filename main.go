@@ -1298,15 +1298,15 @@ const tplSetup = `{{ define "setup" }}<!DOCTYPE html><html><head><title>Setup</t
 :root { --bg-body: #0f172a; --bg-card: rgba(30, 41, 59, 0.8); --text-main: #f8fafc; --text-muted: #94a3b8; --input-bg: #020617; --input-border: #334155; --accent: #3b82f6; --bg-grad-1: #1e293b; --bg-grad-2: #3b82f6; }
 [data-theme="light"] { --bg-body: #f1f5f9; --bg-card: rgba(255, 255, 255, 0.85); --text-main: #0f172a; --text-muted: #64748b; --input-bg: #ffffff; --input-border: #cbd5e1; --accent: #2563eb; --bg-grad-1: #e2e8f0; --bg-grad-2: #cbd5e1; }
 body { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--bg-body); background-image: radial-gradient(at 50% 0%, var(--bg-grad-1) 0px, transparent 50%), radial-gradient(at 100% 0%, var(--bg-grad-2) 0px, transparent 50%); display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: background-color 0.3s, color 0.3s; position: relative; }
-.login-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid rgba(128, 128, 128, 0.1); width: 100%; max-width: 400px; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); animation: fadeUp 0.5s ease-out; }
+.login-card { background: var(--bg-card); backdrop-filter: blur(14px); border: 1px solid rgba(128, 128, 128, 0.14); width: 100%; max-width: 400px; padding: 2.5rem; border-radius: 1.25rem; box-shadow: 0 30px 70px -20px rgba(2, 8, 23, 0.4); animation: fadeUp 0.5s ease-out; }
 .brand { display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--text-main); gap: 0.75rem; }
-.brand i { color: var(--accent); font-size: 1.75rem; }
+.brand i { width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 10px 22px -10px var(--accent); }
 .input-group { position: relative; margin-bottom: 1.25rem; }
 .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; transition: color 0.2s; z-index: 5; }
 .form-control { width: 100%; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); padding: 0.875rem 1rem 0.875rem 3rem; border-radius: 0.5rem; font-size: 0.95rem; transition: all 0.2s; box-sizing: border-box; }
 .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); background: var(--input-bg); color: var(--text-main); }
 .form-control:focus + .input-icon { color: var(--accent); }
-.btn-login { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; border: none; padding: 0.875rem; border-radius: 0.5rem; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-top: 0.5rem; }
+.btn-login { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; border: none; padding: 0.875rem; border-radius: 0.65rem; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-top: 0.5rem; box-shadow: 0 12px 26px -12px var(--accent); }
 .btn-login:hover { opacity: 0.95; transform: translateY(-1px); }
 .btn-login:active { transform: translateY(0); }
 .footer { text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; }
@@ -1335,15 +1335,15 @@ const tplLogin = `{{ define "login" }}<!DOCTYPE html><html><head><title>Login</t
 :root { --bg-body: #0f172a; --bg-card: rgba(30, 41, 59, 0.8); --text-main: #f8fafc; --text-muted: #94a3b8; --input-bg: #020617; --input-border: #334155; --accent: #3b82f6; --bg-grad-1: #1e293b; --bg-grad-2: #3b82f6; }
 [data-theme="light"] { --bg-body: #f1f5f9; --bg-card: rgba(255, 255, 255, 0.85); --text-main: #0f172a; --text-muted: #64748b; --input-bg: #ffffff; --input-border: #cbd5e1; --accent: #2563eb; --bg-grad-1: #e2e8f0; --bg-grad-2: #cbd5e1; }
 body { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--bg-body); background-image: radial-gradient(at 50% 0%, var(--bg-grad-1) 0px, transparent 50%), radial-gradient(at 100% 0%, var(--bg-grad-2) 0px, transparent 50%); display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: background-color 0.3s, color 0.3s; position: relative; }
-.login-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid rgba(128, 128, 128, 0.1); width: 100%; max-width: 400px; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); animation: fadeUp 0.5s ease-out; }
+.login-card { background: var(--bg-card); backdrop-filter: blur(14px); border: 1px solid rgba(128, 128, 128, 0.14); width: 100%; max-width: 400px; padding: 2.5rem; border-radius: 1.25rem; box-shadow: 0 30px 70px -20px rgba(2, 8, 23, 0.4); animation: fadeUp 0.5s ease-out; }
 .brand { display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--text-main); gap: 0.75rem; }
-.brand i { color: var(--accent); font-size: 1.75rem; }
+.brand i { width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 10px 22px -10px var(--accent); }
 .input-group { position: relative; margin-bottom: 1.25rem; }
 .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; transition: color 0.2s; z-index: 5; }
 .form-control { width: 100%; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); padding: 0.875rem 1rem 0.875rem 3rem; border-radius: 0.5rem; font-size: 0.95rem; transition: all 0.2s; box-sizing: border-box; }
 .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); background: var(--input-bg); color: var(--text-main); }
 .form-control:focus + .input-icon { color: var(--accent); }
-.btn-login { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; border: none; padding: 0.875rem; border-radius: 0.5rem; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-top: 0.5rem; }
+.btn-login { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%); color: white; border: none; padding: 0.875rem; border-radius: 0.65rem; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-top: 0.5rem; box-shadow: 0 12px 26px -12px var(--accent); }
 .btn-login:hover { opacity: 0.95; transform: translateY(-1px); }
 .btn-login:active { transform: translateY(0); }
 .footer { text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; }
@@ -1377,102 +1377,123 @@ body { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', system-ui, -a
 const dashCSS = `<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 <style>
-:root { --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f8fafc; --text-muted: #ffffff; --border: #334155; --accent: #3b82f6; --accent-hover: #2563eb; --danger: #ef4444; --input-bg: #0f172a; --hover-bg: #334155; --term-bg: #000000; --nav-height: 0px; }
-[data-theme="light"] { --bg-body: #f1f5f9; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --border: #e2e8f0; --accent: #2563eb; --accent-hover: #1d4ed8; --danger: #ef4444; --input-bg: #f8fafc; --hover-bg: #f1f5f9; --term-bg: #ffffff; }
-.text-muted { color: var(--text-muted) !important; }
-body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',sans-serif;height:100vh;height:100dvh;overflow:hidden;transition:background-color 0.3s,color 0.3s}
-::-webkit-scrollbar{width:8px;height:8px} ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px} ::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
-
-.sidebar{height:100vh;background:var(--bg-card);border-right:1px solid var(--border);min-width:240px;display:flex;flex-direction:column;transition:all 0.3s;z-index: 1000;}
-.logo{padding:1.5rem;font-size:1.25rem;font-weight:700;color:var(--text-main);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.nav-link{color:var(--text-muted);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:12px;font-weight:500;transition:all 0.2s; white-space: nowrap;}
+:root{--bg-body:#0b1220;--bg-card:#151e2e;--bg-elev:#1c2740;--text-main:#e7ecf3;--text-muted:#8b98ab;--border:#26334a;--accent:#3b82f6;--accent-hover:#2563eb;--accent-soft:rgba(59,130,246,.16);--danger:#ef4444;--input-bg:#0b1220;--hover-bg:#1e2a3f;--term-bg:#0a0f1e;--radius:12px;--radius-sm:8px;--nav-height:0px;--shadow-card:0 1px 2px rgba(0,0,0,.25),0 10px 28px -14px rgba(0,0,0,.55)}
+[data-theme="light"]{--bg-body:#f4f6fb;--bg-card:#ffffff;--bg-elev:#f8fafc;--text-main:#0f172a;--text-muted:#64748b;--border:#e2e8f0;--accent:#2563eb;--accent-hover:#1d4ed8;--accent-soft:rgba(37,99,235,.10);--danger:#dc2626;--input-bg:#f8fafc;--hover-bg:#f1f5f9;--term-bg:#ffffff;--shadow-card:0 1px 2px rgba(15,23,42,.05),0 10px 24px -12px rgba(15,23,42,.14)}
+.text-muted{color:var(--text-muted)!important}
+body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;height:100vh;height:100dvh;overflow:hidden;transition:background-color .25s,color .25s}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+.sidebar{height:100vh;background:var(--bg-card);border-right:1px solid var(--border);min-width:240px;display:flex;flex-direction:column;transition:all .3s;z-index:1000}
+.logo{padding:1.3rem 1.5rem;font-weight:700;color:var(--text-main);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo-text{font-size:1.12rem;line-height:1.15}
+.logo-sub{display:block;font-size:.6rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin-top:3px}
+.logo-mark{width:38px;height:38px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;box-shadow:0 8px 18px -8px var(--accent)}
+.nav-link{color:var(--text-muted);margin:2px .75rem;padding:.6rem .9rem;display:flex;align-items:center;gap:12px;font-weight:500;font-size:.92rem;border-radius:var(--radius-sm);transition:all .18s;white-space:nowrap;border:none}
 .nav-link:hover{background:var(--hover-bg);color:var(--text-main)}
-.nav-link.active{background:rgba(59,130,246,0.15);color:var(--accent);border-right:3px solid var(--accent)}
-.nav-link i { font-size: 1.1rem; }
-
-.sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); display: flex; align-items: center; width: 100%; }
-.logout-btn{ flex: 1; margin-top: 0 !important; border-top: none !important; color: var(--danger) !important; }
-.logout-btn:hover{background:rgba(239,68,68,0.1);color:#f87171}
-.github-btn { color: var(--text-muted); padding: 0.75rem 1.25rem; font-size: 1.2rem; display: flex; align-items: center; transition: all 0.2s; border-left: 1px solid var(--border); }
-.github-btn:hover { color: var(--accent); background: var(--hover-bg); }
-
-.content{flex:1;padding:2rem;overflow-y:auto;height: 100vh; height: 100dvh; padding-bottom: calc(2rem + var(--nav-height));}
-
-@media (max-width: 768px) {
-    :root { --nav-height: 65px; }
-    body { flex-direction: column; }
-    .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); min-width: auto; border-right: none; border-top: 1px solid var(--border); flex-direction: row; justify-content: space-around; padding: 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); }
-    .logo { display: none; }
-    .nav-link { flex-direction: column; gap: 4px; padding: 8px 0; font-size: 0.75rem; flex: 1; justify-content: center; border-right: none !important; border-top: 3px solid transparent; }
-    .nav-link.active { border-right: none; border-top: 3px solid var(--accent); background: transparent; }
-    .nav-link i { font-size: 1.4rem; margin-bottom: 2px; }
-    .sidebar-footer { margin-top: 0; border-top: none; width: auto; display: contents; }
-    .logout-btn { margin-top: 0; border-top: none; border-left: 1px solid var(--border); max-width: 60px; }
-    .github-btn { flex: 1; padding: 8px 0; justify-content: center; border-left: 1px solid var(--border); border-top: 3px solid transparent; }
-    .content { padding: 1rem; padding-bottom: 120px; }
-    h3 { font-size: 1.25rem; }
-    .section-header { margin-bottom: 1rem; }
-    .card-item { padding: 1rem; }
-    .server-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-    .server-info { width: 100%; }
-    .server-actions { width: 100%; justify-content: flex-end; opacity: 1; margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
-    .modal-dialog { margin: 0.5rem; }
-    #termModal .modal-dialog { max-width: 100vw; margin: 0; height: 100vh; }
-    #termModal .modal-content { height: 100%; border-radius: 0; }
-    .term-container { height: calc(100vh - 110px); }
-}
-
-h3{font-size:1.5rem;font-weight:600;margin:0;color:var(--text-main)}
-.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
-.btn-primary{background:var(--accent);border:none;padding:0.5rem 1rem;font-weight:500;color:#fff}
-.btn-primary:hover{background:var(--accent-hover);color:#fff}
-.card-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;transition:all 0.2s}
-.card-item:hover{transform:translateY(-2px);box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);border-color:var(--text-muted)}
-.card-title{font-size:1.1rem;font-weight:600;color:var(--text-main);margin-bottom:0.25rem}
-.card-sub{color:var(--text-muted);font-size:0.875rem;margin-bottom:1rem;font-family:monospace}
-.btn-action{background:var(--hover-bg);color:var(--text-main);border:1px solid var(--border);width:100%;margin-bottom:0.5rem;border-radius:6px;padding:0.4rem;font-size:0.9rem;transition:background 0.2s}
-.btn-action:hover{background:var(--border)}
-.btn-danger-soft{background:rgba(239,68,68,0.15);color:var(--danger);border:none}
-.btn-danger-soft:hover{background:rgba(239,68,68,0.25);color:var(--danger)}
+.nav-link.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav-link i{font-size:1.05rem;width:1.2rem;text-align:center}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);display:flex;align-items:center;width:100%;padding:.35rem 0 .55rem}
+.logout-btn{flex:1;margin-top:0!important;color:var(--danger)!important}
+.logout-btn:hover{background:rgba(239,68,68,.1);color:#f87171}
+.github-btn{color:var(--text-muted);padding:.7rem 1.15rem;font-size:1.15rem;display:flex;align-items:center;transition:all .2s;border-left:1px solid var(--border)}
+.github-btn:hover{color:var(--accent);background:var(--hover-bg)}
+.content{flex:1;padding:2rem 2.25rem;overflow-y:auto;height:100vh;height:100dvh;padding-bottom:calc(2rem + var(--nav-height))}
+h3{font-size:1.4rem;font-weight:700;margin:0;letter-spacing:-.01em}
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem}
+.section-sub{color:var(--text-muted);font-size:.85rem;margin-top:.3rem}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;padding:.55rem 1.1rem;font-weight:600;font-size:.9rem;color:#fff;border-radius:var(--radius-sm);box-shadow:0 6px 16px -8px var(--accent);transition:all .18s}
+.btn-primary:hover{background:var(--accent-hover);color:#fff;transform:translateY(-1px);box-shadow:0 8px 20px -8px var(--accent)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--hover-bg);border:1px solid var(--border);color:var(--text-main);border-radius:var(--radius-sm)}
+.btn-outline-secondary{border-color:var(--border);color:var(--text-muted)}
+.btn-outline-secondary:hover{background:var(--hover-bg);border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--danger);border:none;border-radius:var(--radius-sm)}
+.card-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow-card);transition:all .2s}
+.card-item:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(0,0,0,.35);border-color:var(--accent)}
+.card-title{font-size:1.1rem;font-weight:600;color:var(--text-main);margin-bottom:.25rem}
+.card-sub{color:var(--text-muted);font-size:.875rem;margin-bottom:1rem;font-family:monospace}
+.btn-action{background:var(--hover-bg);color:var(--text-main);border:1px solid var(--border);width:100%;margin-bottom:.5rem;border-radius:var(--radius-sm);padding:.45rem;font-size:.88rem;transition:all .18s}
+.btn-action:hover{background:var(--border);border-color:var(--accent)}
+.btn-danger-soft{background:rgba(239,68,68,.12);color:var(--danger);border:1px solid rgba(239,68,68,.25)}
+.btn-danger-soft:hover{background:rgba(239,68,68,.22);color:var(--danger);border-color:var(--danger)}
 .table-custom{width:100%;border-collapse:collapse;color:var(--text-main)}
-.table-custom th{text-align:left;padding:0.75rem;border-bottom:1px solid var(--border);color:var(--text-muted);font-weight:500}
-.table-custom td{padding:0.75rem;border-bottom:1px solid var(--border)}
+.table-custom th{text-align:left;padding:.7rem .9rem;border-bottom:1px solid var(--border);color:var(--text-muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;background:var(--bg-elev)}
+.table-custom td{padding:.8rem .9rem;border-bottom:1px solid var(--border);font-size:.9rem}
 .table-custom tr:last-child td{border-bottom:none}
+.table-custom tbody tr{transition:background .15s}
 .table-custom tr:hover{background:var(--hover-bg)}
-.list-group-item{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main);margin-bottom:0.5rem;border-radius:6px!important;padding:1rem}
+.list-group-item{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main);margin-bottom:.5rem;border-radius:var(--radius-sm)!important;padding:.95rem 1.1rem;box-shadow:var(--shadow-card);transition:all .18s}
+.list-group-item:hover{border-color:var(--accent)}
+.empty-state{border:1.5px dashed var(--border);border-radius:var(--radius);padding:2.75rem 1rem;text-align:center;color:var(--text-muted);font-size:.9rem;margin-top:.5rem}
+.empty-state i{display:block;font-size:1.9rem;margin-bottom:.65rem;opacity:.45}
+.empty-inline{padding:2.25rem!important;text-align:center;color:var(--text-muted)}
 .hidden{display:none!important}
-.modal-content{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main)}
-.modal-header,.modal-footer{border-color:var(--border)}
-.form-control,.form-select{background:var(--input-bg);border:1px solid var(--border);color:var(--text-main)}
-.form-control:focus,.form-select:focus{background:var(--input-bg);border-color:var(--accent);color:var(--text-main);box-shadow:none}
+.modal-content{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main);border-radius:14px;box-shadow:0 30px 60px -15px rgba(0,0,0,.5)}
+.modal-header,.modal-footer{border-color:var(--border);padding:.9rem 1.25rem}
+.modal-title{font-weight:600;font-size:1.02rem}
+.modal-body{padding:1.25rem}
+.form-label{font-size:.84rem;font-weight:500;color:var(--text-muted);margin-bottom:.35rem}
+.form-control,.form-select{background:var(--input-bg);border:1px solid var(--border);color:var(--text-main);border-radius:var(--radius-sm);padding:.55rem .8rem;transition:border-color .18s,box-shadow .18s}
+.form-control::placeholder{color:var(--text-muted);opacity:.7}
+.form-control:focus,.form-select:focus{background:var(--input-bg);border-color:var(--accent);color:var(--text-main);box-shadow:0 0 0 3px var(--accent-soft)}
+.input-group-text{background:var(--bg-elev);border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius-sm)}
 .btn-close{filter:var(--btn-close-filter)}
-[data-theme="light"] .btn-close{filter:none} [data-theme="dark"] .btn-close{filter:invert(1)}
+[data-theme="light"] .btn-close{filter:none}[data-theme="dark"] .btn-close{filter:invert(1)}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);transition:all .18s}
+.icon-box{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.settings-card{padding:1.15rem}
+.server-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.15rem;margin-bottom:.6rem;transition:all .2s;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-card)}
+.server-item:hover{border-color:var(--accent);transform:translateX(3px)}
+.server-info{display:flex;align-items:center;gap:.95rem}
+.server-actions{display:flex;gap:.5rem;opacity:.75;transition:opacity .2s}
+.server-item:hover .server-actions{opacity:1}
+.group-header{cursor:pointer;padding:.55rem .25rem;user-select:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:.9rem;transition:color .18s}
+.group-header:hover{color:var(--accent)}
+.group-icon{transition:transform .2s;color:var(--text-muted)}
+.group-header[aria-expanded="false"] .group-icon{transform:rotate(-90deg)}
 #termModal .modal-content{background:var(--term-bg)}
+#termModal .modal-header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:.55rem .9rem}
+#termModal .nav-link{color:var(--text-muted);padding:.35rem .85rem;margin:0;font-size:.85rem;border-radius:6px}
+#termModal .nav-link:hover{background:var(--hover-bg);color:var(--text-main)}
+#termModal .nav-link.active{background:var(--accent);color:#fff}
 .term-container{background:var(--term-bg);height:calc(90vh - 45px)}
-#editor{width:100%;height:65vh;border-radius:4px;border:1px solid var(--border)}
+#quick-snippets-menu .dropdown-item{padding:.5rem .9rem;cursor:pointer}
+#editor{width:100%;height:65vh;border-radius:var(--radius-sm);border:1px solid var(--border)}
 #modalEditor{z-index:1060}
-#modalConfirm { z-index: 10000 !important; }
-.snippet-code{background:#000;color:#fff} [data-theme="light"] .snippet-code{background:#f1f5f9;color:#0f172a}
-.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;transition:all 0.2s}
-.icon-box{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.settings-card { padding: 1rem; }
-.server-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
-.server-item:hover { background: var(--hover-bg); border-color: var(--accent); transform: translateX(2px); }
-.server-info { display: flex; align-items: center; gap: 1rem; }
-.server-actions { display: flex; gap: 0.5rem; opacity: 0.7; transition: opacity 0.2s; }
-.server-item:hover .server-actions { opacity: 1; }
-.group-header { cursor: pointer; padding: 0.5rem 0; user-select: none; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
-.group-header:hover { color: var(--accent); }
-.group-icon { transition: transform 0.2s; }
-.group-header[aria-expanded="false"] .group-icon { transform: rotate(-90deg); }
+#modalConfirm{z-index:10000!important}
+.snippet-code{background:var(--bg-elev);color:var(--text-main);padding:.6rem .8rem;border-radius:var(--radius-sm);font-size:.82rem;border:1px solid var(--border);transition:border-color .18s;cursor:pointer}
+.snippet-code:hover{border-color:var(--accent)}
+.alert{border-radius:var(--radius-sm)}
+@media (max-width:768px){
+    :root{--nav-height:65px}
+    body{flex-direction:column}
+    .sidebar{position:fixed;bottom:0;left:0;width:100%;height:var(--nav-height);min-width:auto;border-right:none;border-top:1px solid var(--border);flex-direction:row;justify-content:space-around;padding:0;box-shadow:0 -6px 24px rgba(0,0,0,.12)}
+    .logo{display:none}
+    .nav-link{flex-direction:column;gap:4px;padding:8px 0;font-size:.72rem;flex:1;justify-content:center;margin:0;border-radius:0;border-top:2.5px solid transparent}
+    .nav-link.active{border-top:2.5px solid var(--accent);background:transparent}
+    .nav-link i{font-size:1.35rem;margin-bottom:2px;width:auto}
+    .sidebar-footer{margin-top:0;border-top:none;width:auto;display:contents}
+    .logout-btn{margin-top:0;border-top:none;border-left:1px solid var(--border);max-width:60px}
+    .github-btn{flex:1;padding:8px 0;justify-content:center;border-left:1px solid var(--border);border-top:2.5px solid transparent}
+    .content{padding:1rem;padding-bottom:120px}
+    h3{font-size:1.2rem}
+    .section-header{margin-bottom:1rem}
+    .card-item{padding:1rem}
+    .server-item{flex-direction:column;align-items:flex-start;gap:.5rem}
+    .server-info{width:100%}
+    .server-actions{width:100%;justify-content:flex-end;opacity:1;margin-top:.5rem;border-top:1px solid var(--border);padding-top:.5rem}
+    .modal-dialog{margin:.5rem}
+    #termModal .modal-dialog{max-width:100vw;margin:0;height:100vh}
+    #termModal .modal-content{height:100%;border-radius:0}
+    .term-container{height:calc(100vh - 110px)}
+}
 </style>`
 
 const dashBody = `<div class="sidebar">
-<div class="logo"><i class="bi bi-terminal-fill"></i>WebSSH</div>
+<div class="logo"><div class="logo-mark"><i class="bi bi-terminal-fill"></i></div><div class="logo-text">WebSSH<span class="logo-sub">SSH 管理面板</span></div></div>
 <a href="#" onclick="showSection('servers',this)" class="nav-link active"><i class="bi bi-hdd-stack"></i> <span>服务器</span></a>
 <a href="#" onclick="showSection('groups',this)" class="nav-link"><i class="bi bi-folder2"></i> <span>分组管理</span></a>
 <a href="#" onclick="showSection('credentials',this)" class="nav-link"><i class="bi bi-key"></i> <span>凭证管理</span></a>
@@ -1483,7 +1504,7 @@ const dashBody = `<div class="sidebar">
     <a href="https://github.com/jinhuaitao/WebSSH" target="_blank" class="github-btn" title="View on GitHub"><i class="bi bi-github"></i></a>
 </div>
 </div><div class="content"><div id="section-servers">
-<div class="section-header"><h3>服务器列表</h3><button class="btn btn-primary" onclick="openModal('modalServer')"><i class="bi bi-plus-lg"></i> 新增服务器</button></div>
+<div class="section-header"><div><h3>服务器列表</h3><div class="section-sub">集中管理你的全部 SSH 服务器</div></div><button class="btn btn-primary" onclick="openModal('modalServer')"><i class="bi bi-plus-lg"></i> 新增服务器</button></div>
 {{range $g := .Groups}}
 <div class="group-section mb-4">
     <div class="group-header" data-bs-toggle="collapse" data-bs-target="#group-{{$g.ID}}" aria-expanded="true">
@@ -1500,19 +1521,20 @@ const dashBody = `<div class="sidebar">
     </div></div>
 </div>
 {{end}}
+{{if not .Groups}}<div class="empty-state"><i class="bi bi-hdd-network"></i>还没有服务器，点击右上方“新增服务器”开始使用（自动归入默认分组）</div>{{end}}
 </div>
-<div id="section-credentials" class="hidden"><div class="section-header"><h3>凭证管理</h3><button class="btn btn-primary" onclick="openModal('modalCred')"><i class="bi bi-plus-lg"></i> 新增凭证</button></div>
+<div id="section-credentials" class="hidden"><div class="section-header"><div><h3>凭证管理</h3><div class="section-sub">统一管理的密码 / 私钥凭证，可被多台服务器复用</div></div><button class="btn btn-primary" onclick="openModal('modalCred')"><i class="bi bi-plus-lg"></i> 新增凭证</button></div>
 <div class="card-item p-0 overflow-hidden"><table class="table-custom"><thead><tr><th>备注名称</th><th>用户名</th><th width="150" class="text-end">操作</th></tr></thead><tbody id="cred-list">{{range .Credentials}}
 <tr id="item-credential-{{.ID}}"><td><i class="bi bi-key-fill text-warning me-2"></i>{{.Name}}</td><td>{{.Username}}</td>
-<td class="text-end"><div class="d-flex justify-content-end gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('credential','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('credential','{{.ID}}')"><i class="bi bi-trash"></i></button></div></td></tr>{{end}}</tbody></table></div></div>
-<div id="section-groups" class="hidden"><div class="section-header"><h3>分组管理</h3><button class="btn btn-primary" onclick="openModal('modalGroup')"><i class="bi bi-plus-lg"></i> 新增分组</button></div>
+<td class="text-end"><div class="d-flex justify-content-end gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('credential','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('credential','{{.ID}}')"><i class="bi bi-trash"></i></button></div></td></tr>{{end}}{{if not .Credentials}}<tr><td colspan="3" class="empty-inline">暂无凭证，点击右上方“新增凭证”创建</td></tr>{{end}}</tbody></table></div></div>
+<div id="section-groups" class="hidden"><div class="section-header"><div><h3>分组管理</h3><div class="section-sub">按项目或环境对服务器归类，支持折叠</div></div><button class="btn btn-primary" onclick="openModal('modalGroup')"><i class="bi bi-plus-lg"></i> 新增分组</button></div>
 <div class="row"><div class="col-md-6"><div id="group-list">{{range .Groups}}<div class="list-group-item d-flex justify-content-between align-items-center" id="item-group-{{.ID}}">
-<span class="fw-bold"><i class="bi bi-folder-fill me-2 text-info"></i>{{.Name}}</span><div class="d-flex gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')"><i class="bi bi-trash"></i></button></div></div>{{end}}</div></div></div></div>
-<div id="section-snippets" class="hidden"><div class="section-header"><h3>快捷指令</h3><button class="btn btn-primary" onclick="openModal('modalSnippet')"><i class="bi bi-plus-lg"></i> 新增指令</button></div>
+<span class="fw-bold"><i class="bi bi-folder-fill me-2 text-info"></i>{{.Name}}</span><div class="d-flex gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')"><i class="bi bi-trash"></i></button></div></div>{{end}}{{if not .Groups}}<div class="empty-state"><i class="bi bi-folder-plus"></i>暂无分组，创建分组后可在服务器中关联</div>{{end}}</div></div></div></div>
+<div id="section-snippets" class="hidden"><div class="section-header"><div><h3>快捷指令</h3><div class="section-sub">常用命令片段，可在终端弹窗中一键发送</div></div><button class="btn btn-primary" onclick="openModal('modalSnippet')"><i class="bi bi-plus-lg"></i> 新增指令</button></div>
 <div class="row" id="snippet-list">{{range .Snippets}}<div class="col-md-6 mb-3" id="item-snippet-{{.ID}}"><div class="list-group-item">
 <div class="d-flex justify-content-between mb-2"><span class="fw-bold text-primary">{{.Name}}</span><div class="d-flex gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('snippet','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('snippet','{{.ID}}')"><i class="bi bi-trash"></i></button></div></div>
-<div class="snippet-code p-2 rounded small font-monospace cursor-pointer text-muted" onclick="copyText('{{.Command}}')" title="点击复制">{{.Command}}</div></div></div>{{end}}</div></div>
-<div id="section-settings" class="hidden"><div class="section-header"><h3>系统设置</h3></div><div class="row g-3">
+<div class="snippet-code p-2 rounded small font-monospace cursor-pointer text-muted" onclick="copyText('{{.Command}}')" title="点击复制">{{.Command}}</div></div></div>{{end}}{{if not .Snippets}}<div class="col-12"><div class="empty-state"><i class="bi bi-lightning-charge"></i>暂无快捷指令，添加后可在终端里快速发送</div></div>{{end}}</div></div>
+<div id="section-settings" class="hidden"><div class="section-header"><div><h3>系统设置</h3><div class="section-sub">主题外观、账号安全、通知与版本管理</div></div></div><div class="row g-3">
 <div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-primary bg-opacity-10 text-primary me-3"><i class="bi bi-palette"></i></div><h6 class="mb-0">界面风格</h6></div><p class="text-muted small mb-3">切换明亮/深色模式</p><button class="btn btn-action btn-sm w-100" onclick="toggleTheme()"><i class="bi bi-sun-fill me-2"></i>日/夜切换</button></div></div>
 <div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-warning bg-opacity-10 text-warning me-3"><i class="bi bi-shield-lock"></i></div><h6 class="mb-0">修改密码</h6></div><p class="text-muted small mb-2">更新管理员密码</p><div class="input-group input-group-sm"><input type="password" id="new-sys-pass" class="form-control" placeholder="新密码"><button class="btn btn-primary" onclick="updateSettings('pass')">更新</button></div></div></div>
 <div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-danger bg-opacity-10 text-danger me-3"><i class="bi bi-shield-check"></i></div><h6 class="mb-0">两步验证 (2FA)</h6></div>
