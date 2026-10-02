@@ -168,7 +168,7 @@ func downloadAndReplace() (int64, error) {
 	default:
 		return 0, fmt.Errorf("不支持的 CPU 架构: %s", runtime.GOARCH)
 	}
-	dlURL := ghProxy() + "https://github.com/"+ghRepo+"/releases/latest/download/webssh-linux-"+runtime.GOARCH
+	dlURL := ghProxy() + "https://github.com/" + ghRepo + "/releases/latest/download/webssh-linux-" + runtime.GOARCH
 	req, err := http.NewRequest("GET", dlURL, nil)
 	if err != nil {
 		return 0, err
@@ -216,6 +216,33 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 	json.NewEncoder(w).Encode(v)
 }
 
+// versionLessThan 按数字段逐段比较语义化版本 (如 v1.2.10 > v1.2.9)
+func versionLessThan(a, b string) bool {
+	parse := func(v string) []int {
+		v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+		parts := strings.FieldsFunc(v, func(r rune) bool { return r == '.' || r == '-' || r == '_' })
+		nums := make([]int, len(parts))
+		for i, p := range parts {
+			nums[i], _ = strconv.Atoi(p)
+		}
+		return nums
+	}
+	na, nb := parse(a), parse(b)
+	for i := 0; i < len(na) || i < len(nb); i++ {
+		var x, y int
+		if i < len(na) {
+			x = na[i]
+		}
+		if i < len(nb) {
+			y = nb[i]
+		}
+		if x != y {
+			return x < y
+		}
+	}
+	return false
+}
+
 func handleVersion(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"version": version})
 }
@@ -233,7 +260,7 @@ func handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]interface{}{
 		"current":    version,
 		"latest":     latest,
-		"has_update": version != "dev" && latest != version,
+		"has_update": version != "dev" && versionLessThan(version, latest),
 		"docker":     isDocker(),
 	})
 }
@@ -595,21 +622,21 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := generateRandomToken()
-	
+
 	const sessionDuration = 30 * 24 * time.Hour
 	expiry := time.Now().Add(sessionDuration)
 
 	dbLock.Lock()
 	db.Sessions[token] = expiry
 	dbLock.Unlock()
-	
+
 	saveData()
 
 	http.SetCookie(w, &http.Cookie{
-		Name: "session_token", 
-		Value: token, 
-		Path: "/", 
-		MaxAge: int(sessionDuration.Seconds()), 
+		Name:     "session_token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   int(sessionDuration.Seconds()),
 		HttpOnly: true,
 	})
 
@@ -916,7 +943,7 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 	modes := ssh.TerminalModes{ssh.ECHO: 1, ssh.TTY_OP_ISPEED: 14400, ssh.TTY_OP_OSPEED: 14400}
-	
+
 	// 保留 xterm-256color 支持颜色高亮
 	if err := session.RequestPty("xterm-256color", rows, cols, modes); err != nil {
 		return
@@ -999,7 +1026,7 @@ func handleSFTPList(w http.ResponseWriter, r *http.Request) {
 			ModTime: f.ModTime().Format("2006-01-02 15:04"),
 			IsDir:   f.IsDir(),
 		}
-		
+
 		if f.IsDir() {
 			dirs = append(dirs, item)
 		} else {
@@ -1204,10 +1231,10 @@ func handleSFTPSave(w http.ResponseWriter, r *http.Request) {
 
 func renderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 	funcMap := template.FuncMap{"json": func(v interface{}) template.JS { a, _ := json.Marshal(v); return template.JS(a) }}
-	
-	fullTpl := tplSetup + tplLogin + 
+
+	fullTpl := tplSetup + tplLogin +
 		`{{ define "dashboard" }}<!DOCTYPE html><html><head><title>WebSSH</title>` +
-		`<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">` + 
+		`<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">` +
 		`<link rel="manifest" href="/manifest.json">` +
 		`<meta name="theme-color" content="#0f172a">` +
 		`<meta name="apple-mobile-web-app-capable" content="yes">` +
@@ -1215,7 +1242,7 @@ func renderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 		`<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/icons/terminal-fill.svg">` +
 		dashCSS + `</head><body class="d-flex" data-theme="light">` +
 		dashBody + dashModals + dashScript + `</body></html>{{ end }}`
-	
+
 	t, _ := template.New("html").Funcs(funcMap).Parse(fullTpl)
 	t.ExecuteTemplate(w, tmplName, data)
 }
@@ -1555,7 +1582,7 @@ function disable2FA() {
     });
 }
 async function loadCurrentVersion(){try{let res=await fetch('/api/version');let d=await res.json();let el=document.getElementById('cur-version');if(el)el.innerText=d.version;}catch(e){}}
-async function checkUpdate(){const btn=document.getElementById('btn-check-update');const info=document.getElementById('update-info');btn.disabled=true;info.innerText='检查中...';try{let res=await fetch('/api/update/check');if(!res.ok)throw new Error((await res.text()).trim());let d=await res.json();info.innerText='最新版本: '+d.latest+' | '+(d.docker?'Docker 环境请拉取新镜像升级':(d.has_update?'发现新版本，可一键更新':'已是最新版本'));if(d.has_update&&!d.docker)document.getElementById('btn-do-update').classList.remove('hidden');else document.getElementById('btn-do-update').classList.add('hidden');}catch(e){info.innerText='检查失败: '+e;}btn.disabled=false;}}
+async function checkUpdate(){const btn=document.getElementById('btn-check-update');const info=document.getElementById('update-info');btn.disabled=true;info.innerText='检查中...';try{let res=await fetch('/api/update/check');if(!res.ok)throw new Error((await res.text()).trim());let d=await res.json();info.innerText='最新版本: '+d.latest+' | '+(d.docker?'Docker 环境请拉取新镜像升级':(d.has_update?'发现新版本，可一键更新':'已是最新版本'));if(d.has_update&&!d.docker)document.getElementById('btn-do-update').classList.remove('hidden');else document.getElementById('btn-do-update').classList.add('hidden');}catch(e){info.innerText='检查失败: '+e;}btn.disabled=false;}
 async function runUpdate(){showConfirm('确认更新到最新版本？下载完成后服务将自动重启。',async()=>{const info=document.getElementById('update-info');info.innerText='正在下载新版本...';try{let res=await fetch('/api/update/run',{method:'POST'});if(!res.ok)throw new Error((await res.text()).trim());info.innerHTML='<span class="text-success">更新成功，服务正在重启，请稍候...</span>';waitRestart();}catch(e){info.innerText='更新失败: '+e;}});}
 function waitRestart(){let t=setInterval(async()=>{try{let res=await fetch('/api/version');if(res.ok){clearInterval(t);location.reload();}}catch(e){}},2000);}
 function sendKey(code){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(code);term.focus();}}
