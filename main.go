@@ -21,7 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/pkg/sftp"
 	"github.com/pquerna/otp/totp"
