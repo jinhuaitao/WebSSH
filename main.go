@@ -95,7 +95,7 @@ var (
 // --- 版本与在线更新 ---
 
 // version 版本号来源：每次发版前把这里的默认值改成与 Release tag 一致（如 CI 用 ldflags 注入则以 CI 为准）
-var version = "0.0.27"
+var version = "0.0.28"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
@@ -1485,16 +1485,26 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
 .settings-card{padding:1.2rem}
 .settings-card h6{font-weight:700}
 .settings-card .icon-box{background:var(--accent-soft);color:var(--accent)}
-.grp-card,.snip-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;height:100%;box-shadow:var(--shadow-card);transition:all .22s;position:relative;overflow:hidden;display:flex;flex-direction:column}
-.grp-card::after,.snip-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-accent);opacity:0;transition:opacity .22s}
-.grp-card:hover,.snip-card:hover{border-color:var(--accent-line);transform:translateY(-2px)}
-.grp-card:hover::after,.snip-card:hover::after{opacity:1}
+.snip-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;height:100%;box-shadow:var(--shadow-card);transition:all .22s;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.snip-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-accent);opacity:0;transition:opacity .22s}
+.snip-card:hover{border-color:var(--accent-line);transform:translateY(-2px)}
+.snip-card:hover::after{opacity:1}
+.grp-row{display:flex;align-items:center;gap:1rem;padding:1.15rem 1.25rem;border-bottom:1px solid var(--border);transition:background .18s}
+.grp-row:last-child{border-bottom:none}
+.grp-row:hover{background:var(--bg-hover)}
+.grp-row-main{flex:1;min-width:0}
+.grp-row-actions{display:flex;gap:.5rem;flex-shrink:0}
+.grp-servers{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
+.srv-chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--bg-elev);border:1px solid var(--border);border-radius:999px;padding:.24rem .7rem;font-size:.76rem;color:var(--text-muted);transition:all .18s}
+.srv-chip:hover{border-color:var(--accent-line);color:var(--accent)}
+.srv-chip i{font-size:.72rem}
+.grp-nosrv{font-size:.76rem;color:var(--text-muted);opacity:.65;font-style:italic}
 .grp-top{display:flex;align-items:center;gap:.9rem}
 .grp-icon{width:42px;height:42px;border-radius:12px;background:var(--grad-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;box-shadow:0 8px 18px -9px var(--glow)}
 .grp-name{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grp-meta{margin-top:.35rem}
 .grp-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:auto;padding-top:.75rem;border-top:1px solid var(--border)}
-.grp-actions .btn,.set-row-ctl .btn-action{width:auto;margin-bottom:0}
+.grp-actions .btn,.set-row-ctl .btn-action,.grp-row-actions .btn{width:auto;margin-bottom:0}
 .snip-head{display:flex;align-items:center;gap:.9rem;margin-bottom:.85rem}
 .copy-hint{margin-left:auto;opacity:.45;flex-shrink:0}
 .set-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);margin-bottom:1rem;overflow:hidden}
@@ -1560,7 +1570,9 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
     .stat-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
     .set-row{flex-wrap:wrap}
     .set-row-ctl{width:100%;flex-wrap:wrap}
-    .grp-card,.snip-card{height:auto}
+    .snip-card{height:auto}
+    .grp-row{flex-wrap:wrap}
+    .grp-row-actions{width:100%;justify-content:flex-end}
     .server-item{flex-direction:column;align-items:flex-start;gap:.6rem}
     .server-info{width:100%}
     .server-actions{width:100%;justify-content:flex-end;opacity:1;margin-top:.35rem;border-top:1px solid var(--border);padding-top:.6rem}
@@ -1614,10 +1626,11 @@ const dashBody = `<div class="sidebar">
 <tr id="item-credential-{{.ID}}"><td><i class="bi bi-key-fill me-2" style="color:var(--warn)"></i>{{.Name}}</td><td><span class="badge-mono">{{.Username}}</span></td>
 <td class="text-end"><div class="d-flex justify-content-end gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('credential','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('credential','{{.ID}}')"><i class="bi bi-trash"></i></button></div></td></tr>{{end}}{{if not .Credentials}}<tr><td colspan="3" class="empty-inline"><i class="bi bi-key" style="display:block;font-size:1.7rem;margin-bottom:.5rem;opacity:.4"></i>暂无凭证，点击右上方“新增凭证”创建</td></tr>{{end}}</tbody></table></div></div>
 <div id="section-groups" class="hidden"><div class="section-header"><div><h3>分组管理</h3><div class="section-sub">按项目或环境对服务器归类，分组在服务器列表中可折叠展开</div></div><button class="btn btn-primary" onclick="openModal('modalGroup')"><i class="bi bi-plus-lg"></i> 新增分组</button></div>
-<div class="row g-3" id="group-list">{{range .Groups}}<div class="col-lg-4 col-md-6" id="item-group-{{.ID}}"><div class="grp-card">
-<div class="grp-top"><div class="grp-icon"><i class="bi bi-folder2-open"></i></div><div style="min-width:0"><div class="grp-name" title="{{.Name}}">{{.Name}}</div><div class="grp-meta"><span class="badge-soft"><i class="bi bi-hdd-network"></i><span class="grp-count" data-group="{{.ID}}">0</span> 台服务器</span></div></div></div>
-<div class="grp-actions"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div>
-</div></div>{{end}}{{if not .Groups}}<div class="col-12"><div class="empty-state"><i class="bi bi-folder-plus"></i>暂无分组，点击右上方“新增分组”创建第一个分组</div></div>{{end}}</div></div>
+<div class="set-panel" id="group-list"><div class="set-panel-head"><i class="bi bi-folder2-open"></i> 全部分组<span class="badge-soft ms-auto" style="letter-spacing:0"><i class="bi bi-collection"></i>{{len .Groups}} 个分组</span></div>
+{{range .Groups}}<div class="grp-row" id="item-group-{{.ID}}">
+<div class="grp-row-main"><div class="grp-top"><div class="grp-icon"><i class="bi bi-folder-fill"></i></div><div style="min-width:0"><div class="grp-name" title="{{.Name}}">{{.Name}}</div><div class="grp-meta"><span class="badge-soft"><i class="bi bi-hdd-network"></i><span class="grp-count" data-group="{{.ID}}">0</span> 台服务器</span></div></div></div><div class="grp-servers" data-servers-for="{{.ID}}"></div></div>
+<div class="grp-row-actions"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div>
+</div>{{end}}{{if not .Groups}}<div class="p-3"><div class="empty-state"><i class="bi bi-folder-plus"></i>暂无分组，点击右上方“新增分组”创建第一个分组</div></div>{{end}}</div></div>
 <div id="section-snippets" class="hidden"><div class="section-header"><div><h3>快捷指令</h3><div class="section-sub">常用命令片段，可在终端弹窗中一键发送或点击复制</div></div><button class="btn btn-primary" onclick="openModal('modalSnippet')"><i class="bi bi-plus-lg"></i> 新增指令</button></div>
 <div class="row g-3" id="snippet-list">{{range .Snippets}}<div class="col-lg-6" id="item-snippet-{{.ID}}"><div class="snip-card">
 <div class="snip-head"><div class="grp-icon"><i class="bi bi-lightning-charge-fill"></i></div><div style="min-width:0;flex:1"><div class="grp-name" title="{{.Name}}">{{.Name}}</div><div class="small text-muted">终端弹窗右上角闪电按钮可一键发送</div></div><div class="d-flex gap-2 flex-shrink-0"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('snippet','{{.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('snippet','{{.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div></div>
@@ -1680,7 +1693,7 @@ function showSection(id,btn){document.querySelectorAll('[id^="section-"]').forEa
 function initTheme(){const t=localStorage.getItem('theme')||'light';document.body.setAttribute('data-theme',t);if(aceEditor)aceEditor.setTheme(t==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function toggleTheme(){const c=document.body.getAttribute('data-theme');const n=c==='light'?'dark':'light';document.body.setAttribute('data-theme',n);localStorage.setItem('theme',n);if(aceEditor)aceEditor.setTheme(n==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function initGroupStates(){let s={};try{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');}catch(e){}document.querySelectorAll('.group-section').forEach(sec=>{const c=sec.querySelector('.collapse');const t=sec.querySelector('.group-header');if(!c||!t)return;const id=c.id;if(s[id]===false){c.classList.remove('show');t.setAttribute('aria-expanded','false');}c.addEventListener('hide.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=false;localStorage.setItem('webssh_group_states',JSON.stringify(s));});c.addEventListener('show.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=true;localStorage.setItem('webssh_group_states',JSON.stringify(s));});});}
-function initGroupCounts(){document.querySelectorAll('.grp-count').forEach(el=>{el.innerText=dbData.servers.filter(s=>s.group_id===el.dataset.group).length;});}
+function initGroupCounts(){document.querySelectorAll('.grp-count').forEach(el=>{const gid=el.dataset.group;const list=dbData.servers.filter(s=>s.group_id===gid);el.innerText=list.length;const box=document.querySelector('.grp-servers[data-servers-for="'+gid+'"]');if(box){box.innerHTML=list.length?list.map(s=>'<span class="srv-chip" title="'+s.ip+':'+s.port+'"><i class="bi bi-hdd-network"></i>'+s.name+'</span>').join(''):'<span class="grp-nosrv">该分组下暂无服务器</span>';}});}
 window.addEventListener('load',()=>{initTheme();initGroupStates();initGroupCounts();loadCurrentVersion();let last=localStorage.getItem('activeSection')||'servers';let btn=document.querySelector(".sidebar a[onclick*=\"'"+last+"'\"]");if(btn)btn.click();});
 function findItem(type,id){if(type==='server')return dbData.servers.find(i=>i.id===id);if(type==='group')return dbData.groups.find(i=>i.id===id);if(type==='credential')return dbData.credentials.find(i=>i.id===id);if(type==='snippet')return dbData.snippets.find(i=>i.id===id);return null;}
 function openModal(id,isEdit=false){if(!isEdit){editingId=null;document.querySelector('#'+id+' form')?.reset();if(id==='modalServer')document.getElementById('titleServer').innerText='新增服务器';if(id==='modalGroup')document.getElementById('titleGroup').innerText='新增分组';if(id==='modalCred')document.getElementById('titleCred').innerText='新增凭证';if(id==='modalSnippet')document.getElementById('titleSnippet').innerText='新增指令';}if(!bsModals[id])bsModals[id]=new bootstrap.Modal(document.getElementById(id));bsModals[id].show();}
