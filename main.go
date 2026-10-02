@@ -95,7 +95,7 @@ var (
 // --- 版本与在线更新 ---
 
 // version 版本号来源：每次发版前把这里的默认值改成与 Release tag 一致（如 CI 用 ldflags 注入则以 CI 为准）
-var version = "0.0.26"
+var version = "0.0.27"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
@@ -1485,6 +1485,31 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
 .settings-card{padding:1.2rem}
 .settings-card h6{font-weight:700}
 .settings-card .icon-box{background:var(--accent-soft);color:var(--accent)}
+.grp-card,.snip-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;height:100%;box-shadow:var(--shadow-card);transition:all .22s;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.grp-card::after,.snip-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-accent);opacity:0;transition:opacity .22s}
+.grp-card:hover,.snip-card:hover{border-color:var(--accent-line);transform:translateY(-2px)}
+.grp-card:hover::after,.snip-card:hover::after{opacity:1}
+.grp-top{display:flex;align-items:center;gap:.9rem}
+.grp-icon{width:42px;height:42px;border-radius:12px;background:var(--grad-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;box-shadow:0 8px 18px -9px var(--glow)}
+.grp-name{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp-meta{margin-top:.35rem}
+.grp-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:auto;padding-top:.75rem;border-top:1px solid var(--border)}
+.grp-actions .btn,.set-row-ctl .btn-action{width:auto;margin-bottom:0}
+.snip-head{display:flex;align-items:center;gap:.9rem;margin-bottom:.85rem}
+.copy-hint{margin-left:auto;opacity:.45;flex-shrink:0}
+.set-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-card);margin-bottom:1rem;overflow:hidden}
+.set-panel-head{padding:.75rem 1.2rem;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);background:var(--bg-elev);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.set-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-row-icon{width:38px;height:38px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+.set-row-body{flex:1;min-width:0}
+.set-row-title{font-weight:700;font-size:.92rem}
+.set-row-desc{font-size:.78rem;color:var(--text-muted);margin-top:.15rem}
+.set-row-ctl{flex-shrink:0;display:flex;gap:.5rem;align-items:center}
+.update-hero{background:linear-gradient(165deg,var(--accent-soft),transparent 60%),var(--bg-card)}
+.upd-label{font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
+.upd-cur{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:.2rem 0 .4rem;background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.badge-soft i{font-size:.72rem}
 .modal-content{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main);border-radius:18px;box-shadow:0 40px 80px -20px rgba(0,0,0,.6)}
 .modal-header{border-bottom:1px solid var(--border);padding:1rem 1.35rem;border-radius:18px 18px 0 0;background:var(--bg-elev)}
 .modal-header .modal-title{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:.6rem}
@@ -1533,6 +1558,9 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
     .content{padding:1.05rem;padding-bottom:125px}
     .section-header h3{font-size:1.18rem}
     .stat-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
+    .set-row{flex-wrap:wrap}
+    .set-row-ctl{width:100%;flex-wrap:wrap}
+    .grp-card,.snip-card{height:auto}
     .server-item{flex-direction:column;align-items:flex-start;gap:.6rem}
     .server-info{width:100%}
     .server-actions{width:100%;justify-content:flex-end;opacity:1;margin-top:.35rem;border-top:1px solid var(--border);padding-top:.6rem}
@@ -1585,28 +1613,43 @@ const dashBody = `<div class="sidebar">
 <div class="card-item p-0 overflow-hidden"><table class="table-custom"><thead><tr><th>备注名称</th><th>用户名</th><th width="150" class="text-end">操作</th></tr></thead><tbody id="cred-list">{{range .Credentials}}
 <tr id="item-credential-{{.ID}}"><td><i class="bi bi-key-fill me-2" style="color:var(--warn)"></i>{{.Name}}</td><td><span class="badge-mono">{{.Username}}</span></td>
 <td class="text-end"><div class="d-flex justify-content-end gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('credential','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('credential','{{.ID}}')"><i class="bi bi-trash"></i></button></div></td></tr>{{end}}{{if not .Credentials}}<tr><td colspan="3" class="empty-inline"><i class="bi bi-key" style="display:block;font-size:1.7rem;margin-bottom:.5rem;opacity:.4"></i>暂无凭证，点击右上方“新增凭证”创建</td></tr>{{end}}</tbody></table></div></div>
-<div id="section-groups" class="hidden"><div class="section-header"><div><h3>分组管理</h3><div class="section-sub">按项目或环境对服务器归类，支持折叠</div></div><button class="btn btn-primary" onclick="openModal('modalGroup')"><i class="bi bi-plus-lg"></i> 新增分组</button></div>
-<div class="row"><div class="col-md-7"><div id="group-list">{{range .Groups}}<div class="list-group-item d-flex justify-content-between align-items-center" id="item-group-{{.ID}}">
-<span class="fw-bold"><i class="bi bi-folder-fill me-2" style="color:var(--accent)"></i>{{.Name}}</span><div class="d-flex gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')"><i class="bi bi-trash"></i></button></div></div>{{end}}{{if not .Groups}}<div class="empty-state"><i class="bi bi-folder-plus"></i>暂无分组，创建分组后可在服务器中关联</div>{{end}}</div></div></div></div>
+<div id="section-groups" class="hidden"><div class="section-header"><div><h3>分组管理</h3><div class="section-sub">按项目或环境对服务器归类，分组在服务器列表中可折叠展开</div></div><button class="btn btn-primary" onclick="openModal('modalGroup')"><i class="bi bi-plus-lg"></i> 新增分组</button></div>
+<div class="row g-3" id="group-list">{{range .Groups}}<div class="col-lg-4 col-md-6" id="item-group-{{.ID}}"><div class="grp-card">
+<div class="grp-top"><div class="grp-icon"><i class="bi bi-folder2-open"></i></div><div style="min-width:0"><div class="grp-name" title="{{.Name}}">{{.Name}}</div><div class="grp-meta"><span class="badge-soft"><i class="bi bi-hdd-network"></i><span class="grp-count" data-group="{{.ID}}">0</span> 台服务器</span></div></div></div>
+<div class="grp-actions"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('group','{{.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('group','{{.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div>
+</div></div>{{end}}{{if not .Groups}}<div class="col-12"><div class="empty-state"><i class="bi bi-folder-plus"></i>暂无分组，点击右上方“新增分组”创建第一个分组</div></div>{{end}}</div></div>
 <div id="section-snippets" class="hidden"><div class="section-header"><div><h3>快捷指令</h3><div class="section-sub">常用命令片段，可在终端弹窗中一键发送或点击复制</div></div><button class="btn btn-primary" onclick="openModal('modalSnippet')"><i class="bi bi-plus-lg"></i> 新增指令</button></div>
-<div class="row" id="snippet-list">{{range .Snippets}}<div class="col-md-6 mb-3" id="item-snippet-{{.ID}}"><div class="list-group-item">
-<div class="d-flex justify-content-between mb-2"><span class="fw-bold"><i class="bi bi-lightning-charge-fill me-2" style="color:var(--accent)"></i>{{.Name}}</span><div class="d-flex gap-2"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('snippet','{{.ID}}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('snippet','{{.ID}}')"><i class="bi bi-trash"></i></button></div></div>
-<div class="snippet-code" onclick="copyText('{{.Command}}')" title="点击复制">{{.Command}}</div></div></div>{{end}}{{if not .Snippets}}<div class="col-12"><div class="empty-state"><i class="bi bi-lightning-charge"></i>暂无快捷指令，添加后可在终端里快速发送</div></div>{{end}}</div></div>
-<div id="section-settings" class="hidden"><div class="section-header"><div><h3>系统设置</h3><div class="section-sub">主题外观、账号安全、通知与版本管理</div></div></div><div class="row g-3">
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-palette"></i></div><h6 class="mb-0">界面风格</h6></div><p class="text-muted small mb-3">切换明亮 / 深色模式，全局即时生效</p><button class="btn btn-action btn-sm w-100" onclick="toggleTheme()"><i class="bi bi-sun-fill me-2"></i>日/夜切换</button></div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-shield-lock"></i></div><h6 class="mb-0">修改密码</h6></div><p class="text-muted small mb-2">更新管理员登录密码</p><div class="input-group input-group-sm"><input type="password" id="new-sys-pass" class="form-control" placeholder="新密码"><button class="btn btn-primary" onclick="updateSettings('pass')">更新</button></div></div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-shield-check"></i></div><h6 class="mb-0">两步验证 (2FA)</h6></div>
-{{if .Config.TOTPSecret}}
-    <div class="alert alert-success py-1 small mb-2 text-center"><i class="bi bi-check-circle-fill me-1"></i>已启用</div>
-    <button class="btn btn-action btn-danger-soft btn-sm w-100" onclick="disable2FA()">关闭 2FA</button>
-{{else}}
-    <p class="text-muted small mb-2">支持 Google Authenticator 等 TOTP 应用</p>
-    <button class="btn btn-primary btn-sm w-100" onclick="open2FAModal()">启用 2FA</button>
-{{end}}
+<div class="row g-3" id="snippet-list">{{range .Snippets}}<div class="col-lg-6" id="item-snippet-{{.ID}}"><div class="snip-card">
+<div class="snip-head"><div class="grp-icon"><i class="bi bi-lightning-charge-fill"></i></div><div style="min-width:0;flex:1"><div class="grp-name" title="{{.Name}}">{{.Name}}</div><div class="small text-muted">终端弹窗右上角闪电按钮可一键发送</div></div><div class="d-flex gap-2 flex-shrink-0"><button class="btn btn-sm btn-action btn-icon" onclick="editItem('snippet','{{.ID}}')" title="编辑"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-danger-soft btn-icon" onclick="deleteItem('snippet','{{.ID}}')" title="删除"><i class="bi bi-trash"></i></button></div></div>
+<div class="snippet-code" onclick="copyText('{{.Command}}')" title="点击复制"><i class="bi bi-chevron-right" style="color:var(--accent);flex-shrink:0"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{.Command}}</span><i class="bi bi-clipboard copy-hint"></i></div>
+</div></div>{{end}}{{if not .Snippets}}<div class="col-12"><div class="empty-state"><i class="bi bi-lightning-charge"></i>暂无快捷指令，添加后可在终端里快速发送</div></div>{{end}}</div></div>
+<div id="section-settings" class="hidden"><div class="section-header"><div><h3>系统设置</h3><div class="section-sub">主题外观、账号安全、通知与版本管理</div></div></div>
+<div class="row g-3"><div class="col-lg-7">
+<div class="set-panel"><div class="set-panel-head"><i class="bi bi-palette-fill"></i> 外观与账户</div>
+<div class="set-row"><div class="set-row-icon"><i class="bi bi-brightness-high"></i></div><div class="set-row-body"><div class="set-row-title">界面风格</div><div class="set-row-desc">切换明亮 / 深色模式，全局即时生效</div></div><div class="set-row-ctl"><button class="btn btn-action btn-sm" onclick="toggleTheme()"><i class="bi bi-sun-fill me-1"></i>日/夜切换</button></div></div>
+<div class="set-row"><div class="set-row-icon"><i class="bi bi-shield-lock"></i></div><div class="set-row-body"><div class="set-row-title">修改密码</div><div class="set-row-desc">更新管理员登录密码</div></div><div class="set-row-ctl"><div class="input-group input-group-sm"><input type="password" id="new-sys-pass" class="form-control" placeholder="新密码"><button class="btn btn-primary" onclick="updateSettings('pass')">更新</button></div></div></div>
+<div class="set-row"><div class="set-row-icon"><i class="bi bi-shield-check"></i></div><div class="set-row-body"><div class="set-row-title">两步验证 (2FA)</div><div class="set-row-desc">使用 Google Authenticator 等 TOTP 应用保护登录</div></div><div class="set-row-ctl">
+{{if .Config.TOTPSecret}}<span class="badge-soft"><i class="bi bi-check-circle-fill"></i>已启用</span><button class="btn btn-danger-soft btn-sm" onclick="disable2FA()">关闭 2FA</button>
+{{else}}<button class="btn btn-primary btn-sm" onclick="open2FAModal()"><i class="bi bi-plus-lg me-1"></i>启用 2FA</button>{{end}}
 </div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-database-gear"></i></div><h6 class="mb-0">数据维护</h6></div><div class="d-grid gap-2"><button class="btn btn-outline-secondary btn-action btn-sm" onclick="window.location.href='/api/backup'"><i class="bi bi-download me-2"></i>备份</button><div class="input-group input-group-sm"><input type="file" class="form-control" id="restore-file"><button class="btn btn-danger-soft" onclick="restoreData()">恢复</button></div></div></div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-telegram"></i></div><h6 class="mb-0">TG 通知</h6></div><div class="mb-2"><input type="text" id="tg-token" class="form-control form-control-sm mb-1" placeholder="Bot Token" value="{{.Config.TGBotToken}}"><input type="text" id="tg-chat" class="form-control form-control-sm" placeholder="Chat ID" value="{{.Config.TGChatID}}"></div><div class="d-grid"><button class="btn btn-primary btn-sm" onclick="updateSettings('tg')">保存配置</button></div></div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box me-3"><i class="bi bi-cloud-arrow-up"></i></div><h6 class="mb-0">版本更新</h6></div><div class="text-muted small mb-1">当前版本: <span id="cur-version" class="badge-mono">-</span></div><div id="update-info" class="small mb-2"></div><div class="d-grid gap-1"><button class="btn btn-action btn-sm" id="btn-check-update" onclick="checkUpdate()">检查更新</button><button class="btn btn-primary btn-sm hidden" id="btn-do-update" onclick="runUpdate()">立即更新</button></div></div></div></div></div></div>`
+</div>
+<div class="set-panel"><div class="set-panel-head"><i class="bi bi-database-gear-fill"></i> 数据维护</div>
+<div class="set-row"><div class="set-row-icon"><i class="bi bi-cloud-arrow-down"></i></div><div class="set-row-body"><div class="set-row-title">备份与恢复</div><div class="set-row-desc">导出 JSON 备份，或从备份文件恢复（会覆盖当前全部配置）</div></div><div class="set-row-ctl"><button class="btn btn-action btn-sm" onclick="window.location.href='/api/backup'"><i class="bi bi-download me-1"></i>备份</button><div class="input-group input-group-sm" style="max-width:240px"><input type="file" class="form-control" id="restore-file"><button class="btn btn-danger-soft" onclick="restoreData()">恢复</button></div></div></div>
+</div>
+<div class="set-panel"><div class="set-panel-head"><i class="bi bi-megaphone-fill"></i> 通知与集成</div>
+<div class="set-row"><div class="set-row-icon"><i class="bi bi-telegram"></i></div><div class="set-row-body"><div class="set-row-title">Telegram 通知</div><div class="set-row-desc">登录 / 连接事件实时推送到 TG 机器人</div><div class="d-flex gap-2 mt-2 flex-wrap"><input type="text" id="tg-token" class="form-control form-control-sm" style="flex:2;min-width:180px" placeholder="Bot Token" value="{{.Config.TGBotToken}}"><input type="text" id="tg-chat" class="form-control form-control-sm" style="flex:1;min-width:130px" placeholder="Chat ID" value="{{.Config.TGChatID}}"><button class="btn btn-primary btn-sm" onclick="updateSettings('tg')">保存配置</button></div></div></div>
+</div>
+</div><div class="col-lg-5">
+<div class="set-panel update-hero"><div class="set-panel-head"><i class="bi bi-cloud-arrow-up-fill"></i> 版本更新</div>
+<div class="p-4 text-center">
+<div class="upd-label">当前版本</div>
+<div class="upd-cur font-monospace"><span id="cur-version">-</span></div>
+<div id="update-info" class="small text-muted" style="min-height:22px"></div>
+<div class="d-grid gap-2 mt-2"><button class="btn btn-action" id="btn-check-update" onclick="checkUpdate()"><i class="bi bi-arrow-repeat me-1"></i>检查更新</button><button class="btn btn-primary hidden" id="btn-do-update" onclick="runUpdate()"><i class="bi bi-cloud-arrow-down-fill me-1"></i>立即更新</button></div>
+</div></div>
+<div class="set-panel"><div class="set-panel-head"><i class="bi bi-info-circle"></i> 关于</div>
+<div class="p-3 small text-muted" style="line-height:1.8">WebSSH Manager · 单文件 SSH 运维面板<br>全部数据保存在运行目录的 data.json，建议定期备份。<br><a href="https://github.com/jinhuaitao/WebSSH" target="_blank" style="color:var(--accent);font-weight:600;text-decoration:none"><i class="bi bi-github me-1"></i>GitHub 项目主页 <i class="bi bi-box-arrow-up-right" style="font-size:.7rem"></i></a></div></div>
+</div></div></div></div></div>`
 const dashModals = `<div class="modal fade" id="modalConfirm" tabindex="-1"><div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><h5 class="modal-title" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-2"></i>操作确认</h5></div><div class="modal-body text-center text-muted" id="confirmMessage">Are you sure?</div><div class="modal-footer border-0 justify-content-center pt-0"><button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger btn-sm px-3" onclick="confirmAction()">确认</button></div></div></div></div>
 <div class="modal fade" id="modal2FA"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-shield-check me-2" style="color:var(--accent)"></i>设置两步验证</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
 <div class="modal-body text-center">
@@ -1637,7 +1680,8 @@ function showSection(id,btn){document.querySelectorAll('[id^="section-"]').forEa
 function initTheme(){const t=localStorage.getItem('theme')||'light';document.body.setAttribute('data-theme',t);if(aceEditor)aceEditor.setTheme(t==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function toggleTheme(){const c=document.body.getAttribute('data-theme');const n=c==='light'?'dark':'light';document.body.setAttribute('data-theme',n);localStorage.setItem('theme',n);if(aceEditor)aceEditor.setTheme(n==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function initGroupStates(){let s={};try{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');}catch(e){}document.querySelectorAll('.group-section').forEach(sec=>{const c=sec.querySelector('.collapse');const t=sec.querySelector('.group-header');if(!c||!t)return;const id=c.id;if(s[id]===false){c.classList.remove('show');t.setAttribute('aria-expanded','false');}c.addEventListener('hide.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=false;localStorage.setItem('webssh_group_states',JSON.stringify(s));});c.addEventListener('show.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=true;localStorage.setItem('webssh_group_states',JSON.stringify(s));});});}
-window.addEventListener('load',()=>{initTheme();initGroupStates();loadCurrentVersion();let last=localStorage.getItem('activeSection')||'servers';let btn=document.querySelector(".sidebar a[onclick*=\"'"+last+"'\"]");if(btn)btn.click();});
+function initGroupCounts(){document.querySelectorAll('.grp-count').forEach(el=>{el.innerText=dbData.servers.filter(s=>s.group_id===el.dataset.group).length;});}
+window.addEventListener('load',()=>{initTheme();initGroupStates();initGroupCounts();loadCurrentVersion();let last=localStorage.getItem('activeSection')||'servers';let btn=document.querySelector(".sidebar a[onclick*=\"'"+last+"'\"]");if(btn)btn.click();});
 function findItem(type,id){if(type==='server')return dbData.servers.find(i=>i.id===id);if(type==='group')return dbData.groups.find(i=>i.id===id);if(type==='credential')return dbData.credentials.find(i=>i.id===id);if(type==='snippet')return dbData.snippets.find(i=>i.id===id);return null;}
 function openModal(id,isEdit=false){if(!isEdit){editingId=null;document.querySelector('#'+id+' form')?.reset();if(id==='modalServer')document.getElementById('titleServer').innerText='新增服务器';if(id==='modalGroup')document.getElementById('titleGroup').innerText='新增分组';if(id==='modalCred')document.getElementById('titleCred').innerText='新增凭证';if(id==='modalSnippet')document.getElementById('titleSnippet').innerText='新增指令';}if(!bsModals[id])bsModals[id]=new bootstrap.Modal(document.getElementById(id));bsModals[id].show();}
 function editItem(type,id){const item=findItem(type,id);if(!item)return;editingId=id;if(type==='server'){document.getElementById('titleServer').innerText='编辑服务器';document.getElementById('srv-name').value=item.name;document.getElementById('srv-ip').value=item.ip;document.getElementById('srv-port').value=item.port;document.getElementById('srv-group').value=item.group_id;if(item.credential_id){document.getElementById('authSaved').checked=true;document.getElementById('srv-cred').value=item.credential_id;}else{document.getElementById('authCustom').checked=true;document.getElementById('srv-user').value=item.username;document.getElementById('srv-pass').value=item.password;}toggleAuthFields();openModal('modalServer',true);}else if(type==='group'){document.getElementById('titleGroup').innerText='编辑分组';document.getElementById('group-name').value=item.name;openModal('modalGroup',true);}else if(type==='credential'){document.getElementById('titleCred').innerText='编辑凭证';document.getElementById('cred-name').value=item.name;document.getElementById('cred-user').value=item.username;document.getElementById('cred-pass').value=item.password;document.getElementById('cred-key').value=item.private_key||'';openModal('modalCred',true);}else if(type==='snippet'){document.getElementById('titleSnippet').innerText='编辑指令';document.getElementById('snip-name').value=item.name;document.getElementById('snip-cmd').value=item.command;openModal('modalSnippet',true);}}
