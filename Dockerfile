@@ -1,6 +1,6 @@
 # ==========================================
 # 第一阶段：构建环境 (Builder)
-# 使用 golang:alpine 默认拉取最新稳定版 (包含 1.25+)，解决 crypto 依赖报错
+# 使用 golang:alpine 默认拉取最新稳定版，解决 crypto 依赖报错
 # ==========================================
 FROM golang:alpine AS builder
 
@@ -11,15 +11,20 @@ WORKDIR /build
 # 注意：GitHub 环境网络畅通，不需要配置 GOPROXY 代理
 RUN apk add --no-cache git
 
-# 复制源代码到容器中
+# 先复制依赖清单，利用 Docker 层缓存（依赖不变时无需重新下载）
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 复制源代码
 COPY main.go .
 
-# 初始化 Go 模块并下载依赖
-RUN go mod init webssh && \
-    go mod tidy
+# 构建参数：版本号（由 CI 传入，如 v1.2.0），注入到程序内供"检查更新"使用
+ARG VERSION=dev
 
 # 编译 Go 源码 (关闭 CGO，指定 Linux 系统，压缩体积)
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o webssh-app main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath \
+    -ldflags="-s -w -X main.version=${VERSION}" \
+    -o webssh-app .
 
 
 # ==========================================
@@ -42,5 +47,5 @@ COPY --from=builder /build/webssh-app .
 # 声明应用运行的端口
 EXPOSE 8080
 
-# 启动命令
+# 启动命令（可通过 docker run ... -- 端口 覆盖，或设置环境变量 WEBSSH_PORT）
 CMD ["./webssh-app"]

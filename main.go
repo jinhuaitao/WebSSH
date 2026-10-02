@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,6 +91,176 @@ var (
 	upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 )
 
+// --- 版本与在线更新 ---
+
+// version 由构建时 ldflags 注入: -ldflags "-X main.version=v1.2.3"
+var version = "dev"
+
+const ghRepo = "jinhuaitao/WebSSH"
+
+// ghProxy 返回 GitHub 加速前缀，可用环境变量 WEBSSH_GH_PROXY 覆盖（设为空串则直连）
+func ghProxy() string {
+	if p, ok := os.LookupEnv("WEBSSH_GH_PROXY"); ok {
+		return p
+	}
+	return "https://jht126.eu.org/"
+}
+
+func isDocker() bool {
+	_, err := os.Stat("/.dockerenv")
+	return err == nil
+}
+
+type releaseInfo struct {
+	TagName string `json:"tag_name"`
+}
+
+func fetchLatestVersion() (string, error) {
+	direct := "https://api.github.com/repos/" + ghRepo + "/releases/latest"
+	candidates := []string{direct}
+	if p := ghProxy(); p != "" {
+		candidates = append([]string{p + direct}, candidates...)
+	}
+	client := &http.Client{Timeout: 10 * time.Second}
+	var lastErr error
+	for _, u := range candidates {
+		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return "", err
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "webssh-"+version)
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			lastErr = fmt.Errorf("版本接口返回 %d", resp.StatusCode)
+			continue
+		}
+		var info releaseInfo
+		if err := json.Unmarshal(body, &info); err != nil {
+			lastErr = err
+			continue
+		}
+		if info.TagName == "" {
+			lastErr = fmt.Errorf("未获取到版本信息")
+			continue
+		}
+		return strings.TrimPrefix(info.TagName, "v"), nil
+	}
+	return "", lastErr
+}
+
+// downloadAndReplace 下载最新版本的 Linux 二进制并原子替换当前程序
+func downloadAndReplace() (int64, error) {
+	if runtime.GOOS != "linux" {
+		return 0, fmt.Errorf("在线自更新仅支持 Linux")
+	}
+	if isDocker() {
+		return 0, fmt.Errorf("Docker 环境请通过拉取新镜像升级: docker pull jhtone/webssh && docker compose up -d")
+	}
+	switch runtime.GOARCH {
+	case "amd64", "arm64":
+	default:
+		return 0, fmt.Errorf("不支持的 CPU 架构: %s", runtime.GOARCH)
+	}
+	dlURL := ghProxy() + "https://github.com/"+ghRepo+"/releases/latest/download/webssh-linux-"+runtime.GOARCH
+	req, err := http.NewRequest("GET", dlURL, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("User-Agent", "webssh-"+version)
+	client := &http.Client{Timeout: 120 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("下载失败: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("下载地址返回 %d，请检查网络或 GH_PROXY 配置", resp.StatusCode)
+	}
+	exPath, err := os.Executable()
+	if err != nil {
+		return 0, err
+	}
+	tmp := exPath + ".update.tmp"
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0755)
+	if err != nil {
+		return 0, fmt.Errorf("无法写入临时文件: %v", err)
+	}
+	n, err := io.Copy(f, resp.Body)
+	closeErr := f.Close()
+	if err != nil || closeErr != nil {
+		os.Remove(tmp)
+		return 0, fmt.Errorf("下载中断: %v", err)
+	}
+	// 静态 Go 二进制通常 10MB+，过小基本可判定为下载到了错误页面
+	if n < 1<<20 {
+		os.Remove(tmp)
+		return 0, fmt.Errorf("下载内容异常（仅 %d 字节），已取消更新", n)
+	}
+	if err := os.Rename(tmp, exPath); err != nil {
+		os.Remove(tmp)
+		return 0, fmt.Errorf("替换二进制失败（需要 root 权限？）: %v", err)
+	}
+	log.Printf("二进制已更新: %s (%d bytes)", exPath, n)
+	return n, nil
+}
+
+func writeJSON(w http.ResponseWriter, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(v)
+}
+
+func handleVersion(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, map[string]string{"version": version})
+}
+
+func handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
+	if !checkAuth(r) {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	latest, err := fetchLatestVersion()
+	if err != nil {
+		http.Error(w, "检查更新失败: "+err.Error(), 502)
+		return
+	}
+	writeJSON(w, map[string]interface{}{
+		"current":    version,
+		"latest":     latest,
+		"has_update": version != "dev" && latest != version,
+		"docker":     isDocker(),
+	})
+}
+
+func handleUpdateRun(w http.ResponseWriter, r *http.Request) {
+	if !checkAuth(r) {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	if r.Method != "POST" {
+		http.Error(w, "405", 405)
+		return
+	}
+	n, err := downloadAndReplace()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	writeJSON(w, map[string]interface{}{"status": "ok", "size": n})
+	// 退出旧进程，由 systemd/OpenRC/docker restart=always 拉起新版本
+	go func() {
+		time.Sleep(2 * time.Second)
+		log.Println("更新完成，进程退出以加载新版本")
+		os.Exit(0)
+	}()
+}
+
 // --- 工具函数 ---
 
 // generateRandomToken 生成安全的随机 Session ID
@@ -126,14 +298,31 @@ func loadData() {
 	}
 	if dirty {
 		log.Println("已清理过期会话")
+		data, _ := json.MarshalIndent(db, "", "  ")
+		if err := os.WriteFile(dbFile, data, 0644); err != nil {
+			log.Printf("写入数据文件失败: %v", err)
+		}
 	}
 }
 
+// saveData 原子写入：先写临时文件再 rename，避免进程崩溃/断电导致 data.json 损坏
 func saveData() {
 	dbLock.Lock()
 	defer dbLock.Unlock()
-	data, _ := json.MarshalIndent(db, "", "  ")
-	os.WriteFile(dbFile, data, 0644)
+	data, err := json.MarshalIndent(db, "", "  ")
+	if err != nil {
+		log.Printf("序列化数据失败: %v", err)
+		return
+	}
+	tmp := dbFile + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		log.Printf("写入数据文件失败: %v", err)
+		return
+	}
+	if err := os.Rename(tmp, dbFile); err != nil {
+		log.Printf("数据文件重命名失败: %v", err)
+		os.Remove(tmp)
+	}
 }
 
 // --- TG 通知 ---
@@ -217,6 +406,20 @@ func getSSHClient(serverID string) (*ssh.Client, error) {
 // --- 主程序 ---
 
 func main() {
+	port := flag.Int("port", 8080, "监听端口")
+	showVer := flag.Bool("v", false, "打印版本号并退出")
+	flag.Parse()
+
+	if *showVer {
+		fmt.Println(version)
+		return
+	}
+	if p := os.Getenv("WEBSSH_PORT"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil {
+			*port = v
+		}
+	}
+
 	loadData()
 	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/api/setup", handleSetup)
@@ -225,6 +428,10 @@ func main() {
 	http.HandleFunc("/api/save", handleSaveData)
 	http.HandleFunc("/api/backup", handleBackup)
 	http.HandleFunc("/api/restore", handleRestore)
+
+	http.HandleFunc("/api/version", handleVersion)
+	http.HandleFunc("/api/update/check", handleUpdateCheck)
+	http.HandleFunc("/api/update/run", handleUpdateRun)
 
 	http.HandleFunc("/manifest.json", handleManifest)
 	http.HandleFunc("/sw.js", handleServiceWorker)
@@ -241,8 +448,8 @@ func main() {
 	http.HandleFunc("/api/sftp/cat", handleSFTPCat)
 	http.HandleFunc("/api/sftp/save", handleSFTPSave)
 
-	fmt.Println("Web SSH 启动在 http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Printf("WebSSH %s 启动在 http://localhost:%d\n", version, *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 // --- Handlers ---
@@ -334,9 +541,21 @@ func handleSetup(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "405", 405)
 		return
 	}
+	dbLock.RLock()
+	isSetup := db.Config.IsSetup
+	dbLock.RUnlock()
+	if isSetup {
+		http.Error(w, "系统已初始化，如需修改密码请在设置页操作", 403)
+		return
+	}
+	user, pass := r.FormValue("username"), r.FormValue("password")
+	if user == "" || pass == "" {
+		http.Error(w, "账号和密码不能为空", 400)
+		return
+	}
 	dbLock.Lock()
-	db.Config.AdminUser = r.FormValue("username")
-	db.Config.AdminPass = r.FormValue("password")
+	db.Config.AdminUser = user
+	db.Config.AdminPass = pass
 	db.Config.IsSetup = true
 	dbLock.Unlock()
 	saveData()
@@ -705,8 +924,10 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	stdin, _ := session.StdinPipe()
 	stdout, _ := session.StdoutPipe()
 	stderr, _ := session.StderrPipe()
-	go io.Copy(wsWriter{ws}, stdout)
-	go io.Copy(wsWriter{ws}, stderr)
+	// gorilla/websocket 不允许并发写，stdout/stderr 两个拷贝协程需共享同一把锁
+	wsMu := &sync.Mutex{}
+	go io.Copy(wsWriter{ws, wsMu}, stdout)
+	go io.Copy(wsWriter{ws, wsMu}, stderr)
 	if err := session.Shell(); err != nil {
 		return
 	}
@@ -720,9 +941,14 @@ func handleWebsocketSSH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type wsWriter struct{ *websocket.Conn }
+type wsWriter struct {
+	*websocket.Conn
+	mu *sync.Mutex
+}
 
 func (w wsWriter) Write(p []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	err = w.Conn.WriteMessage(websocket.BinaryMessage, p)
 	return len(p), err
 }
@@ -1230,7 +1456,8 @@ const dashBody = `<div class="sidebar">
 {{end}}
 </div></div>
 <div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-success bg-opacity-10 text-success me-3"><i class="bi bi-database-gear"></i></div><h6 class="mb-0">数据维护</h6></div><div class="d-grid gap-2"><button class="btn btn-outline-secondary btn-action btn-sm" onclick="window.location.href='/api/backup'"><i class="bi bi-download me-2"></i>备份</button><div class="input-group input-group-sm"><input type="file" class="form-control" id="restore-file"><button class="btn btn-danger-soft" onclick="restoreData()">恢复</button></div></div></div></div>
-<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-info bg-opacity-10 text-info me-3"><i class="bi bi-telegram"></i></div><h6 class="mb-0">TG 通知</h6></div><div class="mb-2"><input type="text" id="tg-token" class="form-control form-control-sm mb-1" placeholder="Bot Token" value="{{.Config.TGBotToken}}"><input type="text" id="tg-chat" class="form-control form-control-sm" placeholder="Chat ID" value="{{.Config.TGChatID}}"></div><div class="d-grid"><button class="btn btn-primary btn-sm" onclick="updateSettings('tg')">保存配置</button></div></div></div></div></div></div>`
+<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-info bg-opacity-10 text-info me-3"><i class="bi bi-telegram"></i></div><h6 class="mb-0">TG 通知</h6></div><div class="mb-2"><input type="text" id="tg-token" class="form-control form-control-sm mb-1" placeholder="Bot Token" value="{{.Config.TGBotToken}}"><input type="text" id="tg-chat" class="form-control form-control-sm" placeholder="Chat ID" value="{{.Config.TGChatID}}"></div><div class="d-grid"><button class="btn btn-primary btn-sm" onclick="updateSettings('tg')">保存配置</button></div></div></div>
+<div class="col-xl-3 col-lg-4 col-md-6"><div class="card-item h-100 settings-card"><div class="d-flex align-items-center mb-2"><div class="icon-box bg-info bg-opacity-10 text-info me-3"><i class="bi bi-cloud-arrow-up"></i></div><h6 class="mb-0">版本更新</h6></div><div class="text-muted small mb-1">当前版本: <span id="cur-version" class="font-monospace">-</span></div><div id="update-info" class="small mb-2"></div><div class="d-grid gap-1"><button class="btn btn-action btn-sm" id="btn-check-update" onclick="checkUpdate()">检查更新</button><button class="btn btn-primary btn-sm hidden" id="btn-do-update" onclick="runUpdate()">立即更新</button></div></div></div></div></div></div>`
 
 const dashModals = `<div class="modal fade" id="modalConfirm" tabindex="-1"><div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><h5 class="modal-title text-danger">操作确认</h5></div><div class="modal-body text-center text-muted" id="confirmMessage">Are you sure?</div><div class="modal-footer border-0 justify-content-center pt-0"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-danger btn-sm" onclick="confirmAction()">确认</button></div></div></div></div>
 <div class="modal fade" id="modal2FA"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">设置两步验证</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -1262,7 +1489,7 @@ function showSection(id,btn){document.querySelectorAll('[id^="section-"]').forEa
 function initTheme(){const t=localStorage.getItem('theme')||'light';document.body.setAttribute('data-theme',t);if(aceEditor)aceEditor.setTheme(t==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function toggleTheme(){const c=document.body.getAttribute('data-theme');const n=c==='light'?'dark':'light';document.body.setAttribute('data-theme',n);localStorage.setItem('theme',n);if(aceEditor)aceEditor.setTheme(n==='dark'?'ace/theme/monokai':'ace/theme/chrome');}
 function initGroupStates(){let s={};try{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');}catch(e){}document.querySelectorAll('.group-section').forEach(sec=>{const c=sec.querySelector('.collapse');const t=sec.querySelector('.group-header');if(!c||!t)return;const id=c.id;if(s[id]===false){c.classList.remove('show');t.setAttribute('aria-expanded','false');}c.addEventListener('hide.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=false;localStorage.setItem('webssh_group_states',JSON.stringify(s));});c.addEventListener('show.bs.collapse',()=>{s=JSON.parse(localStorage.getItem('webssh_group_states')||'{}');s[id]=true;localStorage.setItem('webssh_group_states',JSON.stringify(s));});});}
-window.addEventListener('load',()=>{initTheme();initGroupStates();let last=localStorage.getItem('activeSection')||'servers';let btn=document.querySelector(".sidebar a[onclick*=\"'"+last+"'\"]");if(btn)btn.click();});
+window.addEventListener('load',()=>{initTheme();initGroupStates();loadCurrentVersion();let last=localStorage.getItem('activeSection')||'servers';let btn=document.querySelector(".sidebar a[onclick*=\"'"+last+"'\"]");if(btn)btn.click();});
 function findItem(type,id){if(type==='server')return dbData.servers.find(i=>i.id===id);if(type==='group')return dbData.groups.find(i=>i.id===id);if(type==='credential')return dbData.credentials.find(i=>i.id===id);if(type==='snippet')return dbData.snippets.find(i=>i.id===id);return null;}
 function openModal(id,isEdit=false){if(!isEdit){editingId=null;document.querySelector('#'+id+' form')?.reset();if(id==='modalServer')document.getElementById('titleServer').innerText='新增服务器';if(id==='modalGroup')document.getElementById('titleGroup').innerText='新增分组';if(id==='modalCred')document.getElementById('titleCred').innerText='新增凭证';if(id==='modalSnippet')document.getElementById('titleSnippet').innerText='新增指令';}if(!bsModals[id])bsModals[id]=new bootstrap.Modal(document.getElementById(id));bsModals[id].show();}
 function editItem(type,id){const item=findItem(type,id);if(!item)return;editingId=id;if(type==='server'){document.getElementById('titleServer').innerText='编辑服务器';document.getElementById('srv-name').value=item.name;document.getElementById('srv-ip').value=item.ip;document.getElementById('srv-port').value=item.port;document.getElementById('srv-group').value=item.group_id;if(item.credential_id){document.getElementById('authSaved').checked=true;document.getElementById('srv-cred').value=item.credential_id;}else{document.getElementById('authCustom').checked=true;document.getElementById('srv-user').value=item.username;document.getElementById('srv-pass').value=item.password;}toggleAuthFields();openModal('modalServer',true);}else if(type==='group'){document.getElementById('titleGroup').innerText='编辑分组';document.getElementById('group-name').value=item.name;openModal('modalGroup',true);}else if(type==='credential'){document.getElementById('titleCred').innerText='编辑凭证';document.getElementById('cred-name').value=item.name;document.getElementById('cred-user').value=item.username;document.getElementById('cred-pass').value=item.password;document.getElementById('cred-key').value=item.private_key||'';openModal('modalCred',true);}else if(type==='snippet'){document.getElementById('titleSnippet').innerText='编辑指令';document.getElementById('snip-name').value=item.name;document.getElementById('snip-cmd').value=item.command;openModal('modalSnippet',true);}}
@@ -1327,5 +1554,9 @@ function disable2FA() {
         if(res.ok) location.reload();
     });
 }
+async function loadCurrentVersion(){try{let res=await fetch('/api/version');let d=await res.json();let el=document.getElementById('cur-version');if(el)el.innerText=d.version;}catch(e){}}
+async function checkUpdate(){const btn=document.getElementById('btn-check-update');const info=document.getElementById('update-info');btn.disabled=true;info.innerText='检查中...';try{let res=await fetch('/api/update/check');if(!res.ok)throw new Error((await res.text()).trim());let d=await res.json();info.innerText='最新版本: '+d.latest+' | '+(d.docker?'Docker 环境请拉取新镜像升级':(d.has_update?'发现新版本，可一键更新':'已是最新版本'));if(d.has_update&&!d.docker)document.getElementById('btn-do-update').classList.remove('hidden');else document.getElementById('btn-do-update').classList.add('hidden');}catch(e){info.innerText='检查失败: '+e;}btn.disabled=false;}}
+async function runUpdate(){showConfirm('确认更新到最新版本？下载完成后服务将自动重启。',async()=>{const info=document.getElementById('update-info');info.innerText='正在下载新版本...';try{let res=await fetch('/api/update/run',{method:'POST'});if(!res.ok)throw new Error((await res.text()).trim());info.innerHTML='<span class="text-success">更新成功，服务正在重启，请稍候...</span>';waitRestart();}catch(e){info.innerText='更新失败: '+e;}});}
+function waitRestart(){let t=setInterval(async()=>{try{let res=await fetch('/api/version');if(res.ok){clearInterval(t);location.reload();}}catch(e){}},2000);}
 function sendKey(code){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(code);term.focus();}}
 </script>`

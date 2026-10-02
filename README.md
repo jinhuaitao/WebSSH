@@ -14,6 +14,8 @@ WebSSH Manager 是一个基于 Go 语言开发的单文件 WebSSH 解决方案�
 
 🛡 安全保障：支持 2FA 双因素认证 (Google Authenticator)，保障账户安全；支持 Telegram 机器人 登录/连接通知。
 
+🔄 一键更新：应用内置版本管理与在线自升级，在"系统设置 - 版本更新"中检查并一键更新到最新版本（服务自动重启）；管理脚本同样支持版本对比、增量更新、失败回滚与服务启停。
+
 ⚡ 高效管理：支持服务器分组管理、凭证（密码/密钥）统一管理，新增服务器自动归类。
 
 🌐 网络兼容：完美支持 IPv6 服务器连接。
@@ -42,7 +44,7 @@ touch data.json && chmod 666 data.json && docker run -d --name webssh --restart=
 # 推荐安装方式
 
 方法二：使用管理脚本
-如果您使用的是 Linux 服务器，可以使用我们要提供的管理脚本进行安装、升级和卸载：
+如果您使用的是 Linux 服务器，可以使用我们要提供的管理脚本进行安装、更新、卸载与服务管理：
 
 Bash
 
@@ -52,12 +54,32 @@ wget -O webssh.sh https://raw.githubusercontent.com/jinhuaitao/WebSSH/main/webss
 ```
 (注：请根据您实际存放脚本的地址修改上述 URL)
 
+脚本支持的命令行参数（可用于一键操作）：
+
+```
+./webssh.sh install        # 安装 / 更新（自动对比版本、下载校验、失败回滚）
+./webssh.sh check-update   # 仅检查是否有新版本
+./webssh.sh start|stop|restart|status   # 服务管理
+./webssh.sh uninstall      # 卸载
+```
+
+GitHub 代理前缀可通过环境变量覆盖：`GH_PROXY="" ./webssh.sh install`（直连）。
+
 ⚙️ 功能配置
-初始化：首次访问会自动跳转到初始化页面，设置管理员账号密码。
+初始化：首次访问会自动跳转到初始化页面，设置管理员账号密码（初始化后该入口自动关闭，防止被恶意重置）。
 
-两步验证：在“设置”中开启 2FA，使用 Google Authenticator 扫描二维码即可绑定。
+两步验证：在"设置"中开启 2FA，使用 Google Authenticator 扫描二维码即可绑定。
 
-Telegram 通知：在“设置”中填入 Bot Token 和 Chat ID，即可接收登录告警。
+Telegram 通知：在"设置"中填入 Bot Token 和 Chat ID，即可接收登录告警。
+
+版本更新：在"设置 - 版本更新"中点击"检查更新"，发现新版本后可一键升级；旧进程自动退出，由 systemd / OpenRC / Docker restart=always 拉起新版本。Docker 环境请改用 `docker pull` 更新镜像。
+
+🔧 运行参数
+```
+webssh-app -v          # 打印版本号
+webssh-app -port 9090  # 自定义监听端口（也可用环境变量 WEBSSH_PORT）
+WEBSSH_GH_PROXY=https://your-proxy/  # 覆盖应用内更新的 GitHub 加速前缀（设为空串则直连）
+```
 
 🛠 技术栈
 后端：Golang (原生 net/http, golang.org/x/crypto/ssh, github.com/pkg/sftp)
