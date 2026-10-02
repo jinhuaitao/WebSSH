@@ -93,8 +93,8 @@ var (
 
 // --- 版本与在线更新 ---
 
-// version 由构建时 ldflags 注入: -ldflags "-X main.version=v1.2.3"
-var version = "dev"
+// version 默认值与最新发布版本保持一致；构建时可用 ldflags 覆盖: -ldflags "-X main.version=v1.2.3"
+var version = "0.0.21"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
@@ -260,7 +260,7 @@ func handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]interface{}{
 		"current":    version,
 		"latest":     latest,
-		"has_update": version != "dev" && versionLessThan(version, latest),
+		"has_update": versionLessThan(version, latest),
 		"docker":     isDocker(),
 	})
 }

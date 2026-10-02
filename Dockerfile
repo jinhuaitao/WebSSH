@@ -18,8 +18,8 @@ RUN go mod download
 # 复制源代码
 COPY main.go .
 
-# 构建参数：版本号（由 CI 传入，如 v1.2.0），注入到程序内供"检查更新"使用
-ARG VERSION=dev
+# 构建参数：版本号（与源码默认值保持一致，CI 可通过 --build-arg VERSION 覆盖）
+ARG VERSION=0.0.21
 
 # 编译 Go 源码 (关闭 CGO，指定 Linux 系统，压缩体积)
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath \
