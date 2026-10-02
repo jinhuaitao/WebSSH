@@ -95,7 +95,7 @@ var (
 // --- 版本与在线更新 ---
 
 // version 版本号来源：每次发版前把这里的默认值改成与 Release tag 一致（如 CI 用 ldflags 注入则以 CI 为准）
-var version = "0.0.29"
+var version = "0.0.30"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
@@ -1489,7 +1489,7 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
 .snip-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-accent);opacity:0;transition:opacity .22s}
 .snip-card:hover{border-color:var(--accent-line);transform:translateY(-2px)}
 .snip-card:hover::after{opacity:1}
-.grp-row{display:flex;align-items:center;gap:1rem;padding:1.15rem 1.25rem;border-bottom:1px solid var(--border);transition:background .18s}
+.grp-row{padding:1.15rem 1.25rem;border-bottom:1px solid var(--border);transition:background .18s}
 .grp-row:last-child{border-bottom:none}
 .grp-row:hover{background:var(--bg-hover)}
 .grp-servers{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
@@ -1568,7 +1568,6 @@ body{background-color:var(--bg-body);color:var(--text-main);font-family:'Inter',
     .set-row{flex-wrap:wrap}
     .set-row-ctl{width:100%;flex-wrap:wrap}
     .snip-card{height:auto}
-    .grp-row{flex-wrap:wrap}
     .server-item{flex-direction:column;align-items:flex-start;gap:.6rem}
     .server-info{width:100%}
     .server-actions{width:100%;justify-content:flex-end;opacity:1;margin-top:.35rem;border-top:1px solid var(--border);padding-top:.6rem}
