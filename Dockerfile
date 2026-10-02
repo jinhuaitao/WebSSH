@@ -19,7 +19,7 @@ RUN go mod download
 COPY main.go .
 
 # 构建参数：版本号（与源码默认值保持一致，CI 可通过 --build-arg VERSION 覆盖）
-ARG VERSION=0.0.21
+ARG VERSION=0.0.22
 
 # 编译 Go 源码 (关闭 CGO，指定 Linux 系统，压缩体积)
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath \

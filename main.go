@@ -93,8 +93,8 @@ var (
 
 // --- 版本与在线更新 ---
 
-// version 默认值与最新发布版本保持一致；构建时可用 ldflags 覆盖: -ldflags "-X main.version=v1.2.3"
-var version = "0.0.21"
+// version 默认值应与最新发布版本保持一致；CI/手动构建时务必用 ldflags 覆盖: -ldflags "-X main.version=新版本号"
+var version = "0.0.22"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
@@ -106,7 +106,11 @@ func ghProxy() string {
 	return "https://jht126.eu.org/"
 }
 
+// isDocker 判断是否运行在容器内；用 bind mount 挂载二进制时可设 WEBSSH_FORCE_SELFUPDATE=1 强制允许在线更新
 func isDocker() bool {
+	if os.Getenv("WEBSSH_FORCE_SELFUPDATE") == "1" {
+		return false
+	}
 	_, err := os.Stat("/.dockerenv")
 	return err == nil
 }
@@ -280,11 +284,13 @@ func handleUpdateRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]interface{}{"status": "ok", "size": n})
-	// 退出旧进程，由 systemd/OpenRC/docker restart=always 拉起新版本
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+	// 稍等响应发出，然后自动重启接管新版本
 	go func() {
-		time.Sleep(2 * time.Second)
-		log.Println("更新完成，进程退出以加载新版本")
-		os.Exit(0)
+		time.Sleep(500 * time.Millisecond)
+		restartAfterUpdate()
 	}()
 }
 
@@ -1583,7 +1589,7 @@ function disable2FA() {
 }
 async function loadCurrentVersion(){try{let res=await fetch('/api/version');let d=await res.json();let el=document.getElementById('cur-version');if(el)el.innerText=d.version;}catch(e){}}
 async function checkUpdate(){const btn=document.getElementById('btn-check-update');const info=document.getElementById('update-info');btn.disabled=true;info.innerText='检查中...';try{let res=await fetch('/api/update/check');if(!res.ok)throw new Error((await res.text()).trim());let d=await res.json();info.innerText='最新版本: '+d.latest+' | '+(d.docker?'Docker 环境请拉取新镜像升级':(d.has_update?'发现新版本，可一键更新':'已是最新版本'));if(d.has_update&&!d.docker)document.getElementById('btn-do-update').classList.remove('hidden');else document.getElementById('btn-do-update').classList.add('hidden');}catch(e){info.innerText='检查失败: '+e;}btn.disabled=false;}
-async function runUpdate(){showConfirm('确认更新到最新版本？下载完成后服务将自动重启。',async()=>{const info=document.getElementById('update-info');info.innerText='正在下载新版本...';try{let res=await fetch('/api/update/run',{method:'POST'});if(!res.ok)throw new Error((await res.text()).trim());info.innerHTML='<span class="text-success">更新成功，服务正在重启，请稍候...</span>';waitRestart();}catch(e){info.innerText='更新失败: '+e;}});}
-function waitRestart(){let t=setInterval(async()=>{try{let res=await fetch('/api/version');if(res.ok){clearInterval(t);location.reload();}}catch(e){}},2000);}
+async function runUpdate(){let oldVer=(document.getElementById('cur-version')||{}).innerText||'';showConfirm('确认更新到最新版本？下载完成后服务将自动重启。',async()=>{const info=document.getElementById('update-info');info.innerText='正在下载新版本...';try{let res=await fetch('/api/update/run',{method:'POST'});if(!res.ok)throw new Error((await res.text()).trim());info.innerHTML='<span class="text-success">更新成功，服务正在重启，请稍候...</span>';waitRestart(oldVer);}catch(e){info.innerText='更新失败: '+e;}});}
+function waitRestart(oldVer){let sawDown=false;let n=0;let t=setInterval(async()=>{n++;try{let res=await fetch('/api/version',{cache:'no-store'});if(res.ok){let d=await res.json();if(sawDown||d.version!==oldVer){clearInterval(t);location.reload();return;}}}catch(e){sawDown=true;}if(n>80){clearInterval(t);document.getElementById('update-info').innerHTML='<span class="text-warning">重启检测超时，请确认服务状态后手动刷新页面</span>';document.getElementById('btn-check-update').disabled=false;}},1500);}
 function sendKey(code){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(code);term.focus();}}
 </script>`

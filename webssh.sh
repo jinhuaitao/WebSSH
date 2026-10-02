@@ -221,10 +221,29 @@ setup_service() {
 
     if [ -f /etc/alpine-release ]; then
         # --- Alpine OpenRC 配置 ---
+        # OpenRC 的 command_background 模式不会在进程退出后自动拉起，
+        # 因此生成一个带 trap 清理的守护循环脚本，程序退出（含应用内一键更新）2 秒后自动重启新版本
+        RUNNER_PATH="${BIN_PATH}-runner"
+        cat > "$RUNNER_PATH" <<EOF
+#!/bin/sh
+# WebSSH 守护循环: 子进程退出后自动拉起新版本
+current=""
+cleanup() { [ -n "\$current" ] && kill "\$current" 2>/dev/null; exit 0; }
+trap cleanup TERM INT
+while true; do
+    $BIN_PATH &
+    current=\$!
+    wait "\$current"
+    current=""
+    sleep 2
+done
+EOF
+        chmod +x "$RUNNER_PATH"
+
         cat > /etc/init.d/$SERVICE_NAME <<EOF
 #!/sbin/openrc-run
 name="webssh"
-command="$BIN_PATH"
+command="$RUNNER_PATH"
 command_background=true
 pidfile="/run/${SERVICE_NAME}.pid"
 directory="$DATA_DIR"
@@ -237,7 +256,7 @@ EOF
         chmod +x /etc/init.d/$SERVICE_NAME
         rc-update add $SERVICE_NAME default >/dev/null 2>&1
         service $SERVICE_NAME restart >/dev/null 2>&1
-        log_success "OpenRC 服务已安装并启动"
+        log_success "OpenRC 服务已安装并启动 (含守护循环)"
 
     elif command -v systemctl >/dev/null; then
         # --- Systemd 配置 ---
@@ -464,7 +483,7 @@ uninstall_webssh() {
 
     # 删除二进制文件
     if [ -f "$BIN_PATH" ]; then
-        rm -f "$BIN_PATH" "${BIN_PATH}.bak" "${BIN_PATH}.download"
+        rm -f "$BIN_PATH" "${BIN_PATH}.bak" "${BIN_PATH}.download" "${BIN_PATH}-runner"
         log_success "程序文件已删除"
     else
         log_warn "未找到程序文件"
