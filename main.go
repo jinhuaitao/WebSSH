@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -213,6 +214,41 @@ func downloadAndReplace() (int64, error) {
 	}
 	log.Printf("二进制已更新: %s (%d bytes)", exPath, n)
 	return n, nil
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// restartAfterUpdate 更新落地后让新版本接管进程（兼容 Debian/systemd 与 Alpine/OpenRC 及手动运行）:
+//   - systemd: 直接退出，由 Restart=always 拉起，避免双实例竞争端口
+//   - OpenRC/手动: 派生 setsid 后台进程，等旧进程退出、端口释放后 exec 新二进制
+func restartAfterUpdate() {
+	if os.Getenv("INVOCATION_ID") != "" {
+		log.Println("更新完成: 退出旧进程，由 systemd 拉起新版本")
+		os.Exit(0)
+	}
+	exPath, err := os.Executable()
+	if err != nil {
+		log.Printf("更新完成但无法定位可执行文件: %v，请手动重启服务", err)
+		os.Exit(0)
+	}
+	cmdline := "sleep 2; exec " + shellQuote(exPath)
+	for _, a := range os.Args[1:] {
+		cmdline += " " + shellQuote(a)
+	}
+	var cmd *exec.Cmd
+	if sp, lookErr := exec.LookPath("setsid"); lookErr == nil {
+		cmd = exec.Command(sp, "sh", "-c", cmdline)
+	} else {
+		cmd = exec.Command("sh", "-c", cmdline)
+	}
+	if err := cmd.Start(); err != nil {
+		log.Printf("更新完成但后台拉起新进程失败: %v，请手动重启服务", err)
+		os.Exit(1)
+	}
+	log.Println("更新完成: 已在后台拉起新版本进程，旧进程退出")
+	os.Exit(0)
 }
 
 func writeJSON(w http.ResponseWriter, v interface{}) {
