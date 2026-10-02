@@ -95,7 +95,7 @@ var (
 // --- 版本与在线更新 ---
 
 // version 版本号来源：每次发版前把这里的默认值改成与 Release tag 一致（如 CI 用 ldflags 注入则以 CI 为准）
-var version = "0.0.31"
+var version = "0.0.32"
 
 const ghRepo = "jinhuaitao/WebSSH"
 
